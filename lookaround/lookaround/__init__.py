@@ -1,9 +1,9 @@
 from datetime import datetime
 import requests
 
-from proto import MapTile_pb2
-import geo
-from panorama import LookaroundPanorama
+from lookaround.lookaround.proto import MapTile_pb2
+import lookaround.lookaround.geo as geo
+from lookaround.lookaround.panorama import LookaroundPanorama
 
 
 def get_coverage_tile_by_latlon(lat, lon):
