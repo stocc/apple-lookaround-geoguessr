@@ -7,7 +7,7 @@ import string
 import time
 from urllib.parse import urlparse, quote
 
-from lookaround.proto import ResourceManifest_pb2
+from .proto import ResourceManifest_pb2
 
 # based on https://github.com/retroplasma/flyover-reverse-engineering
 # MIT(?)
