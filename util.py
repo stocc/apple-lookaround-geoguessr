@@ -1,5 +1,5 @@
 from flask.json import JSONEncoder
-from lookaround.panorama import LookaroundPanorama
+from lookaround.lookaround.panorama import LookaroundPanorama
 
 
 class CustomJSONEncoder(JSONEncoder):
