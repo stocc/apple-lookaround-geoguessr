@@ -1,13 +1,13 @@
 from datetime import datetime
 import requests
 
-from lookaround.lookaround.proto import MapTile_pb2
-import lookaround.lookaround.geo as geo
-from lookaround.lookaround.panorama import LookaroundPanorama
+from .proto import MapTile_pb2
+from .geo import wgs84_to_tile_coord
+from .panorama import LookaroundPanorama
 
 
 def get_coverage_tile_by_latlon(lat, lon):
-    x, y = geo.wgs84_to_tile_coord(lat, lon, 17)
+    x, y = wgs84_to_tile_coord(lat, lon, 17)
     return get_coverage_tile(x, y)
 
 

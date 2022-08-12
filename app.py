@@ -10,7 +10,7 @@ import sys
 sys.path.append("./lookaround")
 from lookaround.lookaround.auth import Authenticator
 from lookaround.lookaround.geo import wgs84_to_tile_coord
-from lookaround import get_coverage_tile, fetch_pano_segment
+from lookaround.lookaround import get_coverage_tile, fetch_pano_segment
 
 from util import CustomJSONEncoder
 from geo import haversine_distance
