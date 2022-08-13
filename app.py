@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, send_file, request
+from flask import Flask, jsonify, render_template, send_file, request, make_response
 import io
 import math
 import mimetypes
@@ -8,6 +8,8 @@ import requests
 import sys
 import gc
 import time, threading
+
+from flask_cors import CORS
 
 from lookaround.lookaround.auth import Authenticator
 from lookaround.lookaround.geo import wgs84_to_tile_coord
@@ -34,6 +36,7 @@ def thread_function():
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
     app.json_encoder = CustomJSONEncoder
@@ -75,22 +78,19 @@ def create_app():
     
     @app.route("/closest/<float(signed=True):lat>/<float(signed=True):lon>/")
     def closest_pano_to_coord(lat, lon):
-        if request.method == "OPTIONS": # CORS preflight
-            return _build_cors_preflight_response()
-        else:
-            x, y = wgs84_to_tile_coord(lat, lon, 17)
-            panos = get_coverage_tile(x, y)
-            if len(panos) == 0:
-                return jsonify(None)
+        x, y = wgs84_to_tile_coord(lat, lon, 17)
+        panos = get_coverage_tile(x, y)
+        if len(panos) == 0:
+            return jsonify(None)
 
-            smallest_distance = 9999999
-            closest = None
-            for pano in panos:
-                distance = haversine_distance(lat, lon, pano.lat, pano.lon)
-                if distance < smallest_distance:
-                    smallest_distance = distance
-                    closest = pano
-            return _corsify_actual_response(jsonify(closest))
+        smallest_distance = 9999999
+        closest = None
+        for pano in panos:
+            distance = haversine_distance(lat, lon, pano.lat, pano.lon)
+            if distance < smallest_distance:
+                smallest_distance = distance
+                closest = pano
+        return jsonify(closest)
 
     @app.route("/pano/<int:panoid>/<int:region_id>/<int:zoom>/")
     def relay_full_pano(panoid, region_id, zoom):
