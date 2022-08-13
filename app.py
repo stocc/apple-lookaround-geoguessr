@@ -6,6 +6,8 @@ from PIL import Image
 import pillow_heif
 import requests
 import sys
+import gc
+import time, threading
 
 from lookaround.lookaround.auth import Authenticator
 from lookaround.lookaround.geo import wgs84_to_tile_coord
@@ -25,6 +27,11 @@ def _corsify_actual_response(response):
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
 
+def thread_function():
+    while True:
+        gc.collect()
+        time.sleep(1)
+
 def create_app():
     app = Flask(__name__)
 
@@ -34,6 +41,9 @@ def create_app():
     mimetypes.add_type('text/javascript', '.js')
     pillow_heif.register_heif_opener()
     auth = Authenticator()
+
+    janitor_thread = threading.Thread(target=thread_function)
+    janitor_thread.start()
 
     @app.route("/")
     def index():
@@ -89,6 +99,8 @@ def create_app():
             heic_bytes = fetch_pano_segment(panoid, region_id, i, zoom, auth)
             with Image.open(io.BytesIO(heic_bytes)) as image:
                 heic_array.append(image)
+                heic_bytes = None
+                image = None
 
         TILE_SIZE = round(heic_array[0].width * (256 / 5632))
         WIDTH_SIZE = round(heic_array[0].width * (1024 / 5632))
@@ -99,10 +111,13 @@ def create_app():
         heic_pano.paste(heic_array[1], (heic_array[0].width-TILE_SIZE, round((8192-max_height)/2)))
         heic_pano.paste(heic_array[2], ((heic_array[0].width+heic_array[1].width)-(TILE_SIZE*2), round((8192-max_height)/2)))
         heic_pano.paste(heic_array[3], ((heic_array[0].width+heic_array[1].width+heic_array[2].width)-(TILE_SIZE*3), round((8192-max_height)/2)))
+        heic_array = None
         
         with io.BytesIO() as output:
             heic_pano.save(output, format="jpeg")
+            heic_pano = None
             jpeg_bytes = output.getvalue()
+            output = None
         return send_file(
             io.BytesIO(jpeg_bytes),
             mimetype='image/jpeg'
@@ -112,12 +127,22 @@ def create_app():
     def relay_pano_segment(panoid, region_id, segment, zoom):
         heic_bytes = fetch_pano_segment(panoid, region_id, segment, zoom, auth)
         with Image.open(io.BytesIO(heic_bytes)) as image:
+            heic_bytes = None
             with io.BytesIO() as output:
                 image.save(output, format='jpeg')
+                image = None
                 jpeg_bytes = output.getvalue()
+                output = None
         return send_file(
             io.BytesIO(jpeg_bytes),
             mimetype='image/jpeg'
         )
+    
+    @app.route("/gc")
+    def gc_collect():
+        gc.collect()
+        resp = jsonify(success=True)
+        resp.status_code = 200
+        return resp
 
     return app
