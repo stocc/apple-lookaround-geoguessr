@@ -438,6 +438,6 @@ function onLoad() {
 	});
 }
 
-window.addEventListener("DOMContentLoaded", (event) => {
+(function() {
 	onLoad();
 });
