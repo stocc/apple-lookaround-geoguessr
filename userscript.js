@@ -31,7 +31,8 @@ const resolutionSetting = 2;
 
 
 
-const extensionFactor = 2;
+const extensionFactor = 2; // TODO Play around with this value for best results with image stretching
+
 async function blobToBase64(blob) {
 	return new Promise((resolve, _) => {
 	  const reader = new FileReader();
@@ -216,8 +217,8 @@ const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 };
 
 const getPano = (pano) => {
-	rp = resoultionProfiles[resolutionSetting];
-	fullWidth = 2 * rp.big.width + 2 * rp.small.width - 4 * rp.overlap;
+	let rp = resoultionProfiles[resolutionSetting];
+	let fullWidth = 2 * rp.big.width + 2 * rp.small.width - 4 * rp.overlap;
 	return {
 		location: {
 			pano: pano,
