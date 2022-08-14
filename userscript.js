@@ -442,4 +442,4 @@ function onLoad() {
 
 (function() {
 	onLoad();
-});
+})();
