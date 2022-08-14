@@ -25,6 +25,11 @@ Massive thank you to the following people:
 
 // BEGIN CODE SECTION
 
+// 0 best, 4 worst
+
+const resolutionSetting = 4;
+
+
 
 
 async function blobToBase64(blob) {
@@ -50,6 +55,68 @@ const MENU_HTML = `
 	</div>
 </div>
 `;
+
+
+let resoultionProfiles = {
+	0: {
+		"overlap": 256,
+		"big": {
+			"width": 5632,
+			"height": 4352,
+		},
+		"small": {
+			"width": 3072,
+			"height": 4352,
+		}
+	},
+	1: {
+		"overlap": 188,
+		"big": {
+			"width": 4128,
+			"height": 3088,
+		},
+		"small": {
+			"width": 2256,
+			"height": 3088,
+		},
+	},
+	2: {
+		"overlap": 100,
+		"big": {
+			"width": 2208,
+			"height": 1648,
+		},
+		"small": {
+			"width": 1200,
+			"height": 1648,
+		}
+	},
+	3: {
+		"overlap": 71,
+		"big": {
+			"width": 1568,
+			"height": 1168,
+		},
+		"small": {
+			"width": 848,
+			"height": 1168,
+		}
+	},
+	4: {
+		"overlap": 50,
+		"big": {
+			"width": 1104,
+			"height": 832,
+		},
+		"small": {
+			"width": 608,
+			"height": 832,
+		}
+	}
+
+}
+
+
 
 const isGamePage = () => location.pathname.startsWith("/challenge/") || location.pathname.startsWith("/results/") ||
 						location.pathname.startsWith("/game/")|| location.pathname.startsWith("/battle-royale/") ||
@@ -174,14 +241,12 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 	try {
 
 		// New endpoint /panourl in the python server returns just the Apple URL for the pano
-		var testURL = BASE_URL+"panourl/" + lookAroundPanoId.toString() + "/" + regionId.toString() + "/"+x.toString()+"/0/"
+		var testURL = BASE_URL+"panourl/" + lookAroundPanoId.toString() + "/" + regionId.toString() + "/"+x.toString()+"/"+resolutionSetting.toString()+"/"
 
 
-		console.log("Requesting tile " + [testURL])
 
 		var thing = await fetch(testURL);
 		var parsed = await thing.json();
-		console.log(parsed);
 
 
         //var panoURL = "https://cors-anywhere.herokuapp.com/"+parsed.url;
@@ -190,25 +255,31 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 		// docker run --publish 8080:8080 testcab/cors-anywhere
 		var panoURL = "http://localhost:8080/"+parsed.url;
 		//var panoURL = parsed.url;
+
+		console.log("Requesting tile " + [x, parsed.url, panoURL])
+
         var blobres = await fetch(panoURL);
         var blob = await blobres.blob();
 
+		console.log("Fetched tile, converting " + [x, parsed.url, panoURL])
 		// Convert blob to jpeg using heic2any
-        var jpegblob = await heic2any({"blob": blob, "type": "image/jpeg"});
+        var jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
 		//var b64 = await blobToBase64(jpegblob);
 
 		// Tiles 0 and 2 are 3072 x 4352
 		// Tiles 1 and 3 are 5632 x 4352
 
+		console.log("Converted tile, resizing " + [x, parsed.url, panoURL])
+		let rp = resoultionProfiles[resolutionSetting];
 
 		// Putting the jpeg blob into a canvas to remove 256 px from the right (removes overlap)
-		w = 5632;
+		var w = rp.big.width;
 		if(x == 1 || x == 3){
-			w = 3072;
+			w = rp.small.width;
 		}
-		w = w - 256;
+		w = w - rp.overlap;
 		var canvas = document.createElement('canvas');
-		canvas.height = 8192;
+		canvas.height = Math.round(1.4545454545 * rp.big.height);
 		canvas.width = w;
 
 		var ctx = canvas.getContext('2d');
@@ -216,17 +287,21 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 
 		var result = ""
 		img.onload = function(){
-		  ctx.drawImage(img, 0, (8192-4352)/2);
-		
+		  ctx.drawImage(img, 0, (canvas.height-rp.big.height)/2);
+
 		  // This is a big data:image/jpeg;base64, URL
 		  result = canvas.toDataURL("image/jpeg");
 		}
 
-		img.src = URL.createObjectURL(jpegblob);
+		img.src = URL.createObjectURL(await jpegblob);
 
 		// Wait for context to finish loading
+		console.log("Scaling " + [x, parsed.url, panoURL])
+
 		const delay = ms => new Promise(res => setTimeout(res, ms));
-		await delay(500);
+
+		await delay(100);
+
 
 		return result;
 
@@ -307,6 +382,8 @@ function initLookAround() {
 			if (isChecked !== "true") return;
 
 			try {
+				//currentPanos = [loading,loading,loading,loading];
+				//this.setPano("loading");
 				let lat = this.position.lat();
 				let lon = this.position.lng();
 				let lookAroundPanoId, regionId;
@@ -318,13 +395,13 @@ function initLookAround() {
 				lookAroundPanoId = closestObject.panoid;
 				regionId = closestObject.region_id;
 
-				// TODO This can probably parallelized 
+				// TODO This can probably parallelized
                 console.log("Start loading Panos");
-				let pano0 = await loadPanoTest(lookAroundPanoId, regionId,0);
-				let pano1 = await loadPanoTest(lookAroundPanoId, regionId,1);
-				let pano2 = await loadPanoTest(lookAroundPanoId, regionId,2);
-				let pano3 = await loadPanoTest(lookAroundPanoId, regionId,3);
-				currentPanos = [pano0, pano1, pano2, pano3];
+				let pano0 =  loadPanoTest(lookAroundPanoId, regionId,0);
+				let pano1 =  loadPanoTest(lookAroundPanoId, regionId,1);
+				let pano2 =  loadPanoTest(lookAroundPanoId, regionId,2);
+				let pano3 =  loadPanoTest(lookAroundPanoId, regionId,3);
+				currentPanos = [await pano0, await pano1, await pano2, await pano3];
 				// TODO Run async and wait until all panos have loaded
 				this.setPano(lookAroundPanoId);
 			} catch {}
