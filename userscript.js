@@ -9,7 +9,7 @@
 // @grant        none
 // @license      MIT
 // @run-at       document-start
-// @require https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.3/heic2any.min.js
+// @require 	 https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.3/heic2any.min.js
 
 // ==/UserScript==
 
@@ -172,6 +172,8 @@ const getPano = (pano) => {
 var currentPanos = [];
 async function loadPanoTest(lookAroundPanoId, regionId, x) {
 	try {
+
+		// New endpoint /panourl in the python server returns just the Apple URL for the pano
 		var testURL = BASE_URL+"panourl/" + lookAroundPanoId.toString() + "/" + regionId.toString() + "/"+x.toString()+"/0/"
 
 
@@ -190,11 +192,15 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
         var blobres = await fetch(panoURL);
         var blob = await blobres.blob();
 
-
+		// Convert blob to jpeg using heic2any
         var jpegblob = await heic2any({"blob": blob, "type": "image/jpeg"});
 		//var b64 = await blobToBase64(jpegblob);
 
+		// Tiles 0 and 2 are 3072 x 4352
+		// Tiles 1 and 3 are 5632 x 4352
 
+
+		// Putting the jpeg blob into a canvas to remove 256 px from the right (removes overlap)
 		w = 5632;
 		if(x == 1 || x == 3){
 			w = 3072;
@@ -210,12 +216,14 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 		var result = ""
 		img.onload = function(){
 		  ctx.drawImage(img, 0, (8192-4352)/2);
-
+		
+		  // This is a big data:image/jpeg;base64, URL
 		  result = canvas.toDataURL("image/jpeg");
 		}
 
 		img.src = URL.createObjectURL(jpegblob);
 
+		// Wait for context to finish loading
 		const delay = ms => new Promise(res => setTimeout(res, ms));
 		await delay(500);
 
