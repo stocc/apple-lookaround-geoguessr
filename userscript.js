@@ -27,11 +27,11 @@ Massive thank you to the following people:
 
 // 0 best, 4 worst
 
-const resolutionSetting = 4;
+const resolutionSetting = 2;
 
 
 
-
+const extensionFactor = 2;
 async function blobToBase64(blob) {
 	return new Promise((resolve, _) => {
 	  const reader = new FileReader();
@@ -216,6 +216,8 @@ const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 };
 
 const getPano = (pano) => {
+	rp = resoultionProfiles[resolutionSetting];
+	fullWidth = 2 * rp.big.width + 2 * rp.small.width - 4 * rp.overlap;
 	return {
 		location: {
 			pano: pano,
@@ -226,8 +228,8 @@ const getPano = (pano) => {
 		copyright: "(C) Apple",
 		// The definition of the tiles for this panorama.
 		tiles: {
-			tileSize: new google.maps.Size(4096, 8192),
-			worldSize: new google.maps.Size(16384, 9000),
+			tileSize: new google.maps.Size(Math.round(fullWidth / 4), Math.round(extensionFactor * rp.big.height)),
+			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * extensionFactor)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
 			centerHeading: 180,
@@ -279,7 +281,7 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 		}
 		w = w - rp.overlap;
 		var canvas = document.createElement('canvas');
-		canvas.height = Math.round(1.4545454545 * rp.big.height);
+		canvas.height = Math.round(extensionFactor * rp.big.height);
 		canvas.width = w;
 
 		var ctx = canvas.getContext('2d');
