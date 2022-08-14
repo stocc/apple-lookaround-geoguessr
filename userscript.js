@@ -182,10 +182,10 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 
 
         //var panoURL = "https://cors-anywhere.herokuapp.com/"+parsed.url;
-		
+
 		// docker run --publish 8080:8080 testcab/cors-anywhere
-		//panoURL = "http://localhost:8080/"+parsed.url;
-		var panoURL = parsed.url;
+		var panoURL = "http://localhost:8080/"+parsed.url;
+		//var panoURL = parsed.url;
         var blobres = await fetch(panoURL);
         var blob = await blobres.blob();
 
