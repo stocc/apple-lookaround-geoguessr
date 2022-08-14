@@ -186,6 +186,7 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 
         //var panoURL = "https://cors-anywhere.herokuapp.com/"+parsed.url;
 
+		// CORS Proxy running locally
 		// docker run --publish 8080:8080 testcab/cors-anywhere
 		var panoURL = "http://localhost:8080/"+parsed.url;
 		//var panoURL = parsed.url;
@@ -317,12 +318,14 @@ function initLookAround() {
 				lookAroundPanoId = closestObject.panoid;
 				regionId = closestObject.region_id;
 
-                console.log("WAT");
+				// TODO This can probably parallelized 
+                console.log("Start loading Panos");
 				let pano0 = await loadPanoTest(lookAroundPanoId, regionId,0);
 				let pano1 = await loadPanoTest(lookAroundPanoId, regionId,1);
 				let pano2 = await loadPanoTest(lookAroundPanoId, regionId,2);
 				let pano3 = await loadPanoTest(lookAroundPanoId, regionId,3);
 				currentPanos = [pano0, pano1, pano2, pano3];
+				// TODO Run async and wait until all panos have loaded
 				this.setPano(lookAroundPanoId);
 			} catch {}
 		}
