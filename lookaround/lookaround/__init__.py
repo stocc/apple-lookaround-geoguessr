@@ -42,8 +42,7 @@ def _get_coverage_tile_raw(tile_x, tile_y):
     tile.ParseFromString(response.content)
     return tile
 
-
-def fetch_pano_segment(panoid, region_id, segment, zoom, auth):
+def get_pano_segment_url(panoid, region_id, segment, zoom, auth):
     endpoint = "https://gspe72-ssl.ls.apple.com/mnn_us/"
     panoid = str(panoid)
     region_id = str(region_id)
@@ -64,6 +63,12 @@ def fetch_pano_segment(panoid, region_id, segment, zoom, auth):
 
     url = endpoint + f"{panoid_url}/{region_id_padded}/t/{segment}/{zoom}"
     url = auth.authenticate_url(url)
+    print(url)
+    return url
+
+
+def fetch_pano_segment(panoid, region_id, segment, zoom, auth):
+    url = get_pano_segment_url(panoid, region_id, segment, zoom, auth)
     response = requests.get(url)
     if response.ok:
         return response.content
