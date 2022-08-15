@@ -4,7 +4,7 @@ import math
 TILE_SIZE = 256
 
 
-def protobuf_tile_offset_to_wgs84(x_offset, y_offset, tile_x, tile_y):
+def protobuf_tile_offset_to_wgs84(x_offset, y_offset, tile_x, tile_y, tile_z = 17):
     """
     Calculates the absolute position of a pano from the tile offsets returned by the API.
     :param x_offset: The X coordinate of the raw tile offset returned by the API.
@@ -15,7 +15,7 @@ def protobuf_tile_offset_to_wgs84(x_offset, y_offset, tile_x, tile_y):
     """
     pano_x = tile_x + (x_offset / 64.0) / (TILE_SIZE - 1)
     pano_y = tile_y + (255 - (y_offset / 64.0)) / (TILE_SIZE - 1)
-    lat, lon = tile_coord_to_wgs84(pano_x, pano_y, 17)
+    lat, lon = tile_coord_to_wgs84(pano_x, pano_y, tile_z)
     return lat, lon
 
 

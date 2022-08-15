@@ -5,21 +5,25 @@ from .proto import MapTile_pb2
 from .geo import wgs84_to_tile_coord
 from .panorama import LookaroundPanorama
 
+from google.protobuf.json_format import MessageToJson
 
-def get_coverage_tile_by_latlon(lat, lon):
-    x, y = wgs84_to_tile_coord(lat, lon, 17)
+
+def get_coverage_tile_by_latlon(lat, lon, tile_z = 17):
+    x, y = wgs84_to_tile_coord(lat, lon, tile_z)
     return get_coverage_tile(x, y)
 
 
-def get_coverage_tile(tile_x, tile_y):
-    tile = _get_coverage_tile_raw(tile_x, tile_y)
+def get_coverage_tile(tile_x, tile_y, tile_z = 17):
+    tile = _get_coverage_tile_raw(tile_x, tile_y, tile_z)
     panos = []
     for pano in tile.pano:
         lat, lon = geo.protobuf_tile_offset_to_wgs84(
             pano.unknown4.longitude_offset,
             pano.unknown4.latitude_offset,
             tile_x,
-            tile_y)
+            tile_y,
+            tile_z
+            )
         pano_obj = LookaroundPanorama(
             pano.panoid,
             tile.unknown13[pano.region_id_idx].region_id,
@@ -29,17 +33,20 @@ def get_coverage_tile(tile_x, tile_y):
     return panos
 
 
-def _get_coverage_tile_raw(tile_x, tile_y):
+def _get_coverage_tile_raw(tile_x, tile_y, tile_z = 17):
     headers = {
         "maps-tile-style": "style=57&size=2&scale=0&v=0&preflight=2",
         "maps-tile-x": str(tile_x),
         "maps-tile-y": str(tile_y),
-        "maps-tile-z": "17",
+        "maps-tile-z": str(tile_z),
         "maps-auth-token": "w31CPGRO/n7BsFPh8X7kZnFG0LDj9pAuR8nTtH3xhH8=",
     }
     response = requests.get("https://gspe76-ssl.ls.apple.com/api/tile?", headers=headers)
     tile = MapTile_pb2.MapTile()
     tile.ParseFromString(response.content)
+    json_obj = MessageToJson(tile)
+    with open("tile.json", "w") as f:
+        f.write(json_obj)
     return tile
 
 def get_pano_segment_url(panoid, region_id, segment, zoom, auth):

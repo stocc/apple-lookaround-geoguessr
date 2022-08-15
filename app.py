@@ -91,7 +91,27 @@ def create_app():
             if distance < smallest_distance:
                 smallest_distance = distance
                 closest = pano
+                print(x,y)
         return jsonify(closest)
+
+
+
+    @app.route("/tile/<float(signed=True):lat>/<float(signed=True):lon>/")
+    def tile_of_coord(lat, lon):
+        x, y = wgs84_to_tile_coord(lat, lon, 17)
+        
+        return jsonify(x=x,y=y)
+
+
+    @app.route("/fullTileInfo/<int:x>/<int:y>/")
+    def full_tile_coverage_incl_neighbors(x, y):
+        panos = get_coverage_tile(x, y)
+        #print(panos)
+        if len(panos) == 0:
+            return jsonify(None)
+
+        return jsonify(panos)
+
 
     @app.route("/pano/<int:panoid>/<int:region_id>/<int:zoom>/")
     def relay_full_pano(panoid, region_id, zoom):
