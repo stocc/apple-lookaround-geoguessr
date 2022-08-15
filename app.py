@@ -13,7 +13,7 @@ from flask_cors import CORS
 
 from lookaround.lookaround.auth import Authenticator
 from lookaround.lookaround.geo import wgs84_to_tile_coord
-from lookaround.lookaround import get_coverage_tile, fetch_pano_segment, get_pano_segment_url
+from lookaround.lookaround import _get_coverage_tile_raw_json, get_coverage_tile, fetch_pano_segment, get_pano_segment_url
 
 from util import CustomJSONEncoder
 from geo import haversine_distance
@@ -92,7 +92,7 @@ def create_app():
                 smallest_distance = distance
                 closest = pano
                 print(x,y)
-        return jsonify(closest)
+        return jsonify(date="asdf",lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11)
 
 
 
@@ -102,6 +102,11 @@ def create_app():
         
         return jsonify(x=x,y=y)
 
+    @app.route("/rawtile/<int:x>/<int:y>/")
+    def rawtile(x, y):
+        panos = _get_coverage_tile_raw_json(x, y)
+        
+        return panos
 
     @app.route("/fullTileInfo/<int:x>/<int:y>/")
     def full_tile_coverage_incl_neighbors(x, y):

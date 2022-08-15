@@ -27,12 +27,26 @@ def get_coverage_tile(tile_x, tile_y, tile_z = 17):
         pano_obj = LookaroundPanorama(
             pano.panoid,
             tile.unknown13[pano.region_id_idx].region_id,
-            lat, lon)
+            lat, lon, pano.unknown4.unknown10, pano.unknown4.unknown11)
         pano_obj.date = datetime.fromtimestamp(int(pano.timestamp) / 1000.0)
         panos.append(pano_obj)
     return panos
 
 
+def _get_coverage_tile_raw_json(tile_x, tile_y, tile_z = 17):
+    headers = {
+        "maps-tile-style": "style=57&size=2&scale=0&v=0&preflight=2",
+        "maps-tile-x": str(tile_x),
+        "maps-tile-y": str(tile_y),
+        "maps-tile-z": str(tile_z),
+        "maps-auth-token": "w31CPGRO/n7BsFPh8X7kZnFG0LDj9pAuR8nTtH3xhH8=",
+    }
+    response = requests.get("https://gspe76-ssl.ls.apple.com/api/tile?", headers=headers)
+    tile = MapTile_pb2.MapTile()
+    tile.ParseFromString(response.content)
+    json_obj = MessageToJson(tile)
+    return json_obj
+    
 def _get_coverage_tile_raw(tile_x, tile_y, tile_z = 17):
     headers = {
         "maps-tile-style": "style=57&size=2&scale=0&v=0&preflight=2",
