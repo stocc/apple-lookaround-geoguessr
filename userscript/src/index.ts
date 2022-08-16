@@ -267,10 +267,10 @@ function initLookAround() {
 				let lon = this.position.lng();
 				let lookAroundPanoId, regionId;
 
-				let closestObject = await Lookaround.getClosestPano(lat, lon);
+				let closestObject = await Lookaround.getClosestPanoAtCoords(lat, lon);
 
-				lookAroundPanoId = closestObject.panoid;
-				regionId = closestObject.region_id;
+				lookAroundPanoId = closestObject.panoId;
+				regionId = closestObject.regionId;
 				curlat = closestObject.lat;
 				curlon = closestObject.lon;
 				curHeading = (closestObject.heading + Options.HEADING_CALIBRATION) % 360;
