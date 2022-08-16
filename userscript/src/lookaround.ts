@@ -1,4 +1,26 @@
 import * as Options from "./options";
+import { Authenticator } from "./auth";
+
+
+const auth = new Authenticator();
+
+async function getUrlForTile(panoFullId: String, x: Number, resolution: Number) {
+    try {
+        //if (!auth.hasSession()) {
+            await auth.init();
+        //}
+        let segments = panoFullId.split("/");
+        let panoId = segments[0];
+        let regionId = segments[1];
+        let panoid_padded = panoId.padStart(20, "0");
+        let region_id_padded = regionId.padStart(10, "0");
+        let panoid_split = panoid_padded.slice(0, 4) + "/" + panoid_padded.slice(4, 8) + "/" + panoid_padded.slice(8, 12) + "/" + panoid_padded.slice(12, 16) + "/" + panoid_padded.slice(16, 20);
+
+        return auth.authenticateUrl(Options.APPLE_MAPS_TILE_ENDPOINT + panoid_split + "/" + region_id_padded + "/t/" + x + "/" + resolution);
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 // param panoFullId is "panoId/regionId"
 async function loadTileForPano(panoFullId, x) {
@@ -6,14 +28,9 @@ async function loadTileForPano(panoFullId, x) {
 
 		// Step 1: Get the URL of the tile to load
 		// New endpoint /panourl in the python server returns just the Apple URL for the pano
-		//TODO This step can be moved to client side
 
-		var panoUrlReq = Options.BASE_URL+"panourl/" + panoFullId.toString() + "/"+x.toString()+"/"+Options.RESOLUTION_SETTING.toString()+"/"
-		var panoUrlResp = await fetch(panoUrlReq);
-		var panoUrlRespParsed = await panoUrlResp.json();
-
-		var appleMapsPanoURL = Options.CORS_PROXY+panoUrlRespParsed.url;
-
+        var appleMapsPanoURL = await getUrlForTile(panoFullId, x, Options.RESOLUTION_SETTING);
+        appleMapsPanoURL = Options.CORS_PROXY+appleMapsPanoURL;
 		// Step 2: Load the tile
 
 		console.log("Requesting tile " + [appleMapsPanoURL])

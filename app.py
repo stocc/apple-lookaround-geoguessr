@@ -234,4 +234,8 @@ def create_app():
         resp.status_code = 200
         return resp
 
+    @app.route("/tokenp2/")
+    def get_token_p2():
+        return jsonify(auth.token_p2)
+
     return app
