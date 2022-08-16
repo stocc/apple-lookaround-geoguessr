@@ -1,6 +1,6 @@
 import * as Options from "./options";
 import { Authenticator } from "./auth";
-
+import GeoUtils from "./geoutils";
 
 const auth = new Authenticator();
 
@@ -25,13 +25,18 @@ class PanoInfo {
 
 
 
-async function getMapTileForCoords(lat:number, lon:number) {
-
-}
 
 
-async function getCoverageInMapTile(x:number, y:number) {
-
+async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>> {
+	try {
+		let response = await fetch(Options.BASE_URL+"tiles/coverage/" + x + "/" + y + "/");
+		let data = await response.text();
+		let panos = JSON.parse(data);
+		let coverage = panos.map(pano => new PanoInfo(pano.date, pano.panoid, pano.region_id, pano.heading, pano.lat, pano.lon));
+		return coverage;
+	} catch (error) {
+		console.log(error);
+	}
 }
 
 /*
@@ -56,9 +61,43 @@ async function getCoverageInMapTile(x:number, y:number) {
 */
 
 async function getClosestPanoAtCoords(lat:number, lon:number): Promise<PanoInfo> {
+	try {
+		let tile = GeoUtils.wgs84_to_tile_coord(lat, lon, 17);
+		let coverage = await getCoverageInMapTile(tile[0], tile[1]);
+		if (coverage.length == 0) {
+			return null;
+		}
+		let smallestDistance = 9999999;
+		let closest = null;
+		for (let pano of coverage) {
+			let distance = GeoUtils.haversineDistance([lat, lon], [pano.lat, pano.lon]);
+			if (distance < smallestDistance) {
+				smallestDistance = distance;
+				closest = pano;
+			}
+		}
+	
+	
+		let old = await getClosestPanoAtCoords_old(lat, lon);
+		if (old.panoId != closest.panoId) {
+			console.log("old: " + old.panoId + " new: " + closest.panoId);
+		} else {
+			console.log("old: " + old.panoId + " new: " + closest.panoId + " same");
+		}
+	
+		return closest;
+	} catch (error) {
+		console.log(error);
+		return null;
+	}
+}
+
+
+async function getClosestPanoAtCoords_old(lat:number, lon:number): Promise<PanoInfo> {
 	let response = await fetch(Options.BASE_URL+"closest/" + lat + "/" + lon + "/");
 	let data = await response.text();
-	return JSON.parse(data);
+	let closest = JSON.parse(data);
+	return new PanoInfo(closest.date, closest.panoid, closest.region_id, closest.heading, closest.lat, closest.lon);
 }
 
 
