@@ -25,6 +25,7 @@ Massive thank you to the following people:
 // BEGIN CODE SECTION
 import * as Options from "./options";
 import * as Lookaround from "./lookaround";
+import { PanoInfo } from "./lookaround";
 
 
 const MENU_HTML = `
@@ -144,13 +145,12 @@ function injectMenu() {
 // TODO: Is there a better way to do this?
 
 var loadingInProgress = false;
-var currentPanoID = "";
-var currentPanos: Array<String> = [];
+var currentPano: PanoInfo = new PanoInfo("", "", "",0,0,0);
+var currentlyLoadedPanoTiles: Array<String> = [];
 var newRound = true;
-var curlat = 0;
-var curlon = 0;
+
 var curNeighbors = [];
-var curHeading = 0;
+
 
 
 
@@ -167,7 +167,7 @@ const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 		return 'data:image/jpeg;base64,'	
 	}
 
-	return currentPanos[tileX];
+	return currentlyLoadedPanoTiles[tileX];
 
 };
 
@@ -193,7 +193,7 @@ const getPano = (pano) => {
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * Options.EXTENSION_FACTOR)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
-			centerHeading: curHeading,
+			centerHeading: (currentPano.heading + Options.HEADING_CALIBRATION) % 360,
 			getTileUrl: getCustomPanoramaTileUrl,
 		},
 	};
@@ -228,10 +228,9 @@ function initLookAround() {
 				// Called after setPano(). If the pano is "r<panoId>/<regioId>", then we load the tiles for that pano.
 				// If it doesn't start with "r", then loading is done.
 				this.addListener("pano_changed", () => {
-					console.log("Pano changed " +this.getPano() + " " + currentPanoID);
-					if (this.getPano() != null && this.getPano() != currentPanoID && this.getPano() != "" && this.getPano().startsWith("r")) {
+					console.log("Pano changed " +this.getPano());
+					if (this.getPano() != null && this.getPano() != currentPano.panoFullId() && this.getPano() != "" && this.getPano().startsWith("r")) {
 						console.log("New pano requested " + this.getPano());
-						currentPanoID = this.getPano();
 						try {
 							this.beginLoadingPanos(this, this.getPano().replace("r", ""));
 						} catch {}
@@ -271,10 +270,8 @@ function initLookAround() {
 
 				lookAroundPanoId = closestObject.panoId;
 				regionId = closestObject.regionId;
-				curlat = closestObject.lat;
-				curlon = closestObject.lon;
-				curHeading = (closestObject.heading + Options.HEADING_CALIBRATION) % 360;
 				// Request pano to load
+				currentPano = closestObject;
 				this.setPano("r"+lookAroundPanoId+"/"+regionId);
 
 			} catch {}
@@ -283,7 +280,7 @@ function initLookAround() {
 
 		// param panoFullId is "panoId/regionId"
 		async beginLoadingPanos(_t,panoFullId) {
-			if (panoFullId === currentPanoID || loadingInProgress) return;
+			if (loadingInProgress) return;
 
 			console.log("Start loading Panos");
 
@@ -305,9 +302,8 @@ function initLookAround() {
 			let pano2 =  Lookaround.loadTileForPano(panoFullId,2);
 			let pano3 =  Lookaround.loadTileForPano(panoFullId,3);
 			loadingInProgress = false;
-			currentPanos = [await pano0, await pano1, await pano2, await pano3];
+			currentlyLoadedPanoTiles = [await pano0, await pano1, await pano2, await pano3];
 
-			currentPanoID = panoFullId;
 			newRound = false;
 			// Set another panoId to refresh the view
 			this.setPano(panoFullId);
