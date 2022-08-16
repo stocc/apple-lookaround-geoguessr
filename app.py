@@ -47,7 +47,7 @@ def create_app():
 
     @app.route("/")
     def index():
-        return render_template('index.html')
+        return jsonify({"message": "Hello World!"})
 
     # Coverage tiles are passed through this server because of CORS
     @app.route("/tiles/coverage/<int:x>/<int:y>/")
