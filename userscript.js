@@ -26,10 +26,13 @@ Massive thank you to the following people:
 // BEGIN CODE SECTION
 
 // 0 best, 4 worst
-
 const resolutionSetting = 2;
+const headingCalibration = 40;
+const BASE_URL = "https://lookaround-alpha.herokuapp.com/"
+// docker run --publish 8080:8080 testcab/cors-anywhere
+//const CORS_PROXY = "http://localhost:8080/"
 
-
+const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
 const extensionFactor = 2; // TODO Play around with this value for best results with image stretching
 
@@ -41,7 +44,6 @@ async function blobToBase64(blob) {
 	});
   }
 
-const BASE_URL = "http://127.0.0.1:5001/"
 
 const MENU_HTML = `
 <div class="start-standard-game_settings__x94PU">
@@ -243,7 +245,7 @@ const getPano = (pano) => {
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * extensionFactor)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
-			centerHeading: 180,
+			centerHeading: curHeading,
 			getTileUrl: getCustomPanoramaTileUrl,
 		},
 	};
@@ -256,6 +258,7 @@ var newRound = true;
 var curlat = 0;
 var curlng = 0;
 var curNeighbors = [];
+var curHeading = 0;
 // param panoFullId is "panoId/regionId"
 async function loadTileForPano(panoFullId, x) {
 	try {
@@ -272,8 +275,7 @@ async function loadTileForPano(panoFullId, x) {
         //var panoURL = "https://cors-anywhere.herokuapp.com/"+parsed.url;
 
 		// CORS Proxy running locally
-		// docker run --publish 8080:8080 testcab/cors-anywhere
-		var panoURL = "http://localhost:8080/"+parsed.url;
+		var panoURL = CORS_PROXY+parsed.url;
 		//var panoURL = parsed.url;
 
 		console.log("Requesting tile " + [x, parsed.url, panoURL])
@@ -439,6 +441,7 @@ function initLookAround() {
 				regionId = closestObject.region_id;
 				curlat = closestObject.lat;
 				curlng = closestObject.lon;
+				curHeading = (closestObject.heading + headingCalibration) % 360;
 				curNeighbors = await getNeighborsPrimitive(curlat, curlng);
 				// Request pano to load
 				this.setPano("r"+lookAroundPanoId+"/"+regionId);

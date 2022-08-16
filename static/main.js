@@ -159,7 +159,7 @@ function displayPano(pano) {
   panoInfo.innerHTML = `
     <strong>${pano.panoid}</strong>/${pano.region_id}<br>
     <small>${pano.lat.toFixed(5)}, ${pano.lon.toFixed(5)} |
-    ${pano.date}</small>
+    ${pano.unknown10} ${pano.unknown11} ${pano.heading}</small>
   `;
 
   /*panoViewer.on('zoom-updated', (e, zoom_level) => {

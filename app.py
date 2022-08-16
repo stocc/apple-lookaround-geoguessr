@@ -13,7 +13,7 @@ from flask_cors import CORS
 
 from lookaround.lookaround.auth import Authenticator
 from lookaround.lookaround.geo import wgs84_to_tile_coord
-from lookaround.lookaround import get_coverage_tile, fetch_pano_segment, get_pano_segment_url
+from lookaround.lookaround import _get_coverage_tile_raw_json, get_coverage_tile, fetch_pano_segment, get_pano_segment_url
 
 from util import CustomJSONEncoder
 from geo import haversine_distance
@@ -70,7 +70,7 @@ def create_app():
         url = auth.authenticate_url(
             f"https://cdn3.apple-mapkit.com/ti/tile?style=0&size=1&x={x}&y={y}&z={z}&scale=1&lang=en"
             f"&poi=1&tint={tint_param}&emphasis=standard")
-        print(url)
+        #print(url)
         response = requests.get(url)
         return send_file(
             io.BytesIO(response.content),
@@ -91,8 +91,8 @@ def create_app():
             if distance < smallest_distance:
                 smallest_distance = distance
                 closest = pano
-                print(x,y)
-        return jsonify(closest)
+                #print(x,y)
+        return jsonify(date=closest.date,lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11, heading = closest.heading)
 
 
 
@@ -102,6 +102,11 @@ def create_app():
         
         return jsonify(x=x,y=y)
 
+    @app.route("/rawtile/<int:x>/<int:y>/")
+    def rawtile(x, y):
+        panos = _get_coverage_tile_raw_json(x, y)
+        
+        return panos
 
     @app.route("/fullTileInfo/<int:x>/<int:y>/")
     def full_tile_coverage_incl_neighbors(x, y):
@@ -124,7 +129,6 @@ def create_app():
                 image = None
 
         TILE_SIZE = round(heic_array[0].width * (256 / 5632))
-        print("TILE_SIZE:", TILE_SIZE)
         WIDTH_SIZE = round(heic_array[0].width * (1024 / 5632))
         widths, heights = zip(*(i.size for i in heic_array))
         total_width, max_height = (sum(widths)-WIDTH_SIZE), max(heights)
@@ -148,7 +152,6 @@ def create_app():
 
     @app.route("/panodbg/<int:panoid>/<int:region_id>/<int:zoom>/")
     def relay_pano_dbg(panoid, region_id, zoom):
-        print("Starting")
         heic_array = []
         for i in range(4):
             heic_bytes = fetch_pano_segment(panoid, region_id, i, zoom, auth)
