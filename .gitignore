@@ -92,3 +92,6 @@ ENV/
 
 .venv/
 .vl/
+
+.DS_Store/
+
