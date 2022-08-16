@@ -1,0 +1,22 @@
+{
+  "name": "userscript",
+  "version": "1.0.0",
+  "description": "A Tampermonkey script that adds Apple Look Around to GeoGuessr",
+  "main": "dist/script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stocc/apple-lookaround-heroku.git"
+  },
+  "author": "Mistystar, stocc, Kowalski",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/stocc/apple-lookaround-heroku/issues"
+  },
+  "homepage": "https://github.com/stocc/apple-lookaround-heroku#readme",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
+}

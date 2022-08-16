@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"module": "System",
+		"lib": ["DOM", "ES2022"],
+		"target": "ES6",
+		"strict": false,
+		"noImplicitAny": false,
+		"removeComments": false,
+		"preserveConstEnums": true,
+		"outFile": "./dist/script.js",
+		"sourceMap": true
+	},
+	"include": ["src/**/*", "types/globals.d.ts"],
+	"exclude": ["node_modules", "**/*.spec.ts"]
+}
