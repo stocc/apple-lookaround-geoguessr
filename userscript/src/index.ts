@@ -26,13 +26,6 @@ Massive thank you to the following people:
 import * as Options from "./options";
 import * as Lookaround from "./lookaround";
 
-async function blobToBase64(blob: Blob): Promise<string | ArrayBuffer | null> {
-	return new Promise((resolve, _) => {
-		const reader = new FileReader();
-		reader.onloadend = () => resolve(reader.result);
-		reader.readAsDataURL(blob);
-	});
-}
 
 const MENU_HTML = `
 <div class="start-standard-game_settings__x94PU">
@@ -155,7 +148,7 @@ var currentPanoID = "";
 var currentPanos: Array<String> = [];
 var newRound = true;
 var curlat = 0;
-var curlng = 0;
+var curlon = 0;
 var curNeighbors = [];
 var curHeading = 0;
 
@@ -187,7 +180,7 @@ const getPano = (pano) => {
 			description: "Apple Look Around",
 /* 			latLng: {
 				lat: curlat,
-				lng: curlng
+				lng: curlon
 			} */
 
 		},
@@ -279,7 +272,7 @@ function initLookAround() {
 				lookAroundPanoId = closestObject.panoid;
 				regionId = closestObject.region_id;
 				curlat = closestObject.lat;
-				curlng = closestObject.lon;
+				curlon = closestObject.lon;
 				curHeading = (closestObject.heading + Options.HEADING_CALIBRATION) % 360;
 				// Request pano to load
 				this.setPano("r"+lookAroundPanoId+"/"+regionId);
@@ -299,7 +292,7 @@ function initLookAround() {
 				for (const neighbor of curNeighbors) {
 					if (neighbor.pano.includes( panoFullId)) {
 						curlat = neighbor.lat;
-						curlng = neighbor.lng
+						curlon = neighbor.lon
 					}
 					
 				}
