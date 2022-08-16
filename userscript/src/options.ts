@@ -1,3 +1,12 @@
+// Determines the resolution of images requested from Apple
+// Setting a higher resolution will make rounds load WAY slower, until browsers start to support HEIC
+// 0 = highest resolution available, 4 = lowest resolution available.
+// Default: 2
+const RESOLUTION_SETTING = 2;
+
+// Constant value added to calculated heading to calibrate the GeoGuessr compass
+const HEADING_CALIBRATION = 40;
+
 const EXTENSION_FACTOR = 2; // TODO Play around with this value for best results with image stretching
 
 // Python Backend API URL
