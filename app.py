@@ -92,7 +92,7 @@ def create_app():
                 smallest_distance = distance
                 closest = pano
                 #print(x,y)
-        return jsonify(date="asdf",lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11, heading = closest.heading())
+        return jsonify(date=closest.date,lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11, heading = closest.heading)
 
 
 
@@ -129,7 +129,6 @@ def create_app():
                 image = None
 
         TILE_SIZE = round(heic_array[0].width * (256 / 5632))
-        print("TILE_SIZE:", TILE_SIZE)
         WIDTH_SIZE = round(heic_array[0].width * (1024 / 5632))
         widths, heights = zip(*(i.size for i in heic_array))
         total_width, max_height = (sum(widths)-WIDTH_SIZE), max(heights)
@@ -153,7 +152,6 @@ def create_app():
 
     @app.route("/panodbg/<int:panoid>/<int:region_id>/<int:zoom>/")
     def relay_pano_dbg(panoid, region_id, zoom):
-        print("Starting")
         heic_array = []
         for i in range(4):
             heic_bytes = fetch_pano_segment(panoid, region_id, i, zoom, auth)
