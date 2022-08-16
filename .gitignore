@@ -91,3 +91,7 @@ ENV/
 .idea/
 
 .venv/
+.vl/
+
+.DS_Store/
+
