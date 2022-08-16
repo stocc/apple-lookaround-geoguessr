@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-		"module": "System",
+		"module": "CommonJS",
 		"lib": ["DOM", "ES2022"],
 		"target": "ES6",
 		"strict": false,
 		"noImplicitAny": false,
 		"removeComments": false,
 		"preserveConstEnums": true,
-		"outFile": "./dist/script.js",
+		"outDir": "dist",
 		"sourceMap": true
 	},
 	"include": ["src/**/*", "types/globals.d.ts"],
