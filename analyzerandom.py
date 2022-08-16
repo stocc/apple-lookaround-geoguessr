@@ -46,4 +46,4 @@ for k,v in unknown_11s.items():
 plt.legend()
 #plt.axis('off')
 plt.show()
-print(sorted(unknown_10s["random.json"]))
+print(numpy.average(unknown_10s["random.json"]))

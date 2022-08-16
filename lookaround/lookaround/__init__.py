@@ -84,7 +84,7 @@ def get_pano_segment_url(panoid, region_id, segment, zoom, auth):
 
     url = endpoint + f"{panoid_url}/{region_id_padded}/t/{segment}/{zoom}"
     url = auth.authenticate_url(url)
-    print(url)
+    #print(url)
     return url
 
 

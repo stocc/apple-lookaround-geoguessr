@@ -70,7 +70,7 @@ def create_app():
         url = auth.authenticate_url(
             f"https://cdn3.apple-mapkit.com/ti/tile?style=0&size=1&x={x}&y={y}&z={z}&scale=1&lang=en"
             f"&poi=1&tint={tint_param}&emphasis=standard")
-        print(url)
+        #print(url)
         response = requests.get(url)
         return send_file(
             io.BytesIO(response.content),
@@ -91,8 +91,8 @@ def create_app():
             if distance < smallest_distance:
                 smallest_distance = distance
                 closest = pano
-                print(x,y)
-        return jsonify(date="asdf",lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11)
+                #print(x,y)
+        return jsonify(date="asdf",lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11, heading = closest.heading())
 
 
 
