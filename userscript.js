@@ -26,10 +26,13 @@ Massive thank you to the following people:
 // BEGIN CODE SECTION
 
 // 0 best, 4 worst
-
 const resolutionSetting = 2;
+const headingCalibration = 40;
+const BASE_URL = "https://lookaround-alpha.herokuapp.com/"
+// docker run --publish 8080:8080 testcab/cors-anywhere
+//const CORS_PROXY = "http://localhost:8080/"
 
-
+const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
 const extensionFactor = 2; // TODO Play around with this value for best results with image stretching
 
@@ -41,7 +44,6 @@ async function blobToBase64(blob) {
 	});
   }
 
-const BASE_URL = "http://127.0.0.1:5001/"
 
 const MENU_HTML = `
 <div class="start-standard-game_settings__x94PU">
@@ -212,6 +214,12 @@ function injectMenu() {
 
 // Return a pano image given the panoID.
 const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
+
+	// Currently loading first image in a round, return a blank image
+	if (pano.startsWith("r")){  //&& (currentPanos.length == 0 || newRound)  ) {
+		return 'data:image/jpeg;base64,'	
+	}
+
 	return currentPanos[tileX];
 
 };
@@ -223,6 +231,10 @@ const getPano = (pano) => {
 		location: {
 			pano: pano,
 			description: "Apple Look Around",
+			// latLng: {
+			// 	lat: curlat,
+			// 	lng: curlng,
+			// }
 		},
 		links: [],
 		// The text for the copyright control.
@@ -233,18 +245,26 @@ const getPano = (pano) => {
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * extensionFactor)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
-			centerHeading: 180,
+			centerHeading: curHeading,
 			getTileUrl: getCustomPanoramaTileUrl,
 		},
 	};
 };
 
+var loadingInProgress = false;
+var currentPanoID = "";
 var currentPanos = [];
-async function loadPanoTest(lookAroundPanoId, regionId, x) {
+var newRound = true;
+var curlat = 0;
+var curlng = 0;
+var curNeighbors = [];
+var curHeading = 0;
+// param panoFullId is "panoId/regionId"
+async function loadTileForPano(panoFullId, x) {
 	try {
 
 		// New endpoint /panourl in the python server returns just the Apple URL for the pano
-		var testURL = BASE_URL+"panourl/" + lookAroundPanoId.toString() + "/" + regionId.toString() + "/"+x.toString()+"/"+resolutionSetting.toString()+"/"
+		var testURL = BASE_URL+"panourl/" + panoFullId.toString() + "/"+x.toString()+"/"+resolutionSetting.toString()+"/"
 
 
 
@@ -255,8 +275,7 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
         //var panoURL = "https://cors-anywhere.herokuapp.com/"+parsed.url;
 
 		// CORS Proxy running locally
-		// docker run --publish 8080:8080 testcab/cors-anywhere
-		var panoURL = "http://localhost:8080/"+parsed.url;
+		var panoURL = CORS_PROXY+parsed.url;
 		//var panoURL = parsed.url;
 
 		console.log("Requesting tile " + [x, parsed.url, panoURL])
@@ -311,57 +330,43 @@ async function loadPanoTest(lookAroundPanoId, regionId, x) {
 	} catch (error) {
 		console.log(error);
 	}
-
-    // .then(response => response.json()).then(data => {
-    //     var canvas = document.createElement('canvas');
-    //     canvas.width = 500;
-    //     canvas.height = 400;
-
-    //     // Get the drawing context
-    //     var ctx = canvas.getContext('2d');
-	// 	var img = new Image().src = data.url;
-
-		// const delay = ms => new Promise(res => setTimeout(res, ms));
-		// img.onload = () => {
-		// 	ctx.drawImage(img, 0, 0, 500, 400);
-		// }
-		// delay(1000).then(() => {
-		// 	console.log("Image loaded")
-		// 	blob = canvas.toBlob(function(blob) {
-
-		// 	});
-		// });
-
-	// 	.then(response => response.blob()).then(data => {
-	// 		blobToBase64(blob).then((base64)=>{
-	// 			return base64;
-	// 		});
-	// 	});
-
-	// 	// fetch("https://cors-anywhere.herokuapp.com/"+data.url)
-	// 	// 	.then(function (x) {
-	// 	// 		return x.blob();
-	// 	// 	})
-	// 	// 	.then(function (x) {
-	// 	// 		console.log("working on", x);
-	// 	// 		return heic2any({ blob: x, toType: "image/jpeg" });
-	// 	// 	})
-	// 	// 	.then(function (blob) {
-	// 	// 		blobToBase64(blob).then(function (base64) {
-	// 	// 			return base64;
-	// 	// 		});
-	// 	// 	})
-	// 	// 	.catch(function (e) {
-	// 	// 		console.log(e);
-	// 	// 	});
+}
 
 
-    //     // const delay = ms => new Promise(res => setTimeout(res, ms));
+async function getNeighborsPrimitive(lat,lng) {
+	try {
+		let step = 0.001;
+		let dirs = [
+			[lat + step, lng], // north
+			[lat, lng + step], // east
+			[lat - step, lng], // south
+			[lat, lng - step], // west
+		]
+		res = [{"heading":0, "pano":"", "description": "adf"},{"heading":90, "pano":""},{"heading":180, "pano":""},{"heading":270, "pano":""}]
+		var i = 0;
+		for (const dir of dirs) {
+			let response = await fetch(BASE_URL+"closest/" + dir[0] + "/" + dir[1] + "/");
+			let closestObject = await response.json();
+			
+			if (curlat.toString() == closestObject.lat.toString() && curlng.toString() == closestObject.lon.toString()){
+				console.log("Found same pano " + closestObject.panoid)
+				continue;
+			}
 
-    //     // delay(5000).then(() => {
-    //     //     return canvas.toDataURL("image/jpeg");
-    //     // });
-    // }).catch(error => console.log(error));
+			console.log("Found closest pano " + [closestObject.panoid, curlat, curlng, closestObject.lat, closestObject.lon])
+			res[i].pano = "r"+closestObject.panoid + "/" + closestObject.region_id;
+			res[i].lat = closestObject.lat;
+			res[i].lng = closestObject.lon;
+
+			i++;
+		}
+
+		console.log(res);
+		return res;
+	} catch (error) {
+		console.log(error);
+	}
+
 }
 
 function initLookAround() {
@@ -372,15 +377,52 @@ function initLookAround() {
 			let isChecked = localStorage.getItem("applelookaroundchecked");
 			if (isChecked === "true") {
 				this.registerPanoProvider(getPano);
+
+				// Position is being changed by GeoGuessr at the beginning of each round. this.getPosition() contains lat/lng of round.
 				this.addListener("position_changed", () => {
+					console.log("Position changed " + this.getPosition());
 					try {
-						this.appleLookAround(this);
+						newRound = true;
+						this.getFirstPanoId(this);
 					} catch {}
+				});
+
+				// Called after setPano(). If the pano is "r<panoId>/<regioId>", then we load the tiles for that pano.
+				// If it doesn't start with "r", then loading is done.
+				this.addListener("pano_changed", () => {
+					console.log("Pano changed " +this.getPano() + " " + currentPanoID);
+					if (this.getPano() != null && this.getPano() != currentPanoID && this.getPano() != "" && this.getPano().startsWith("r")) {
+						currentPanoID = this.getPano();
+						console.log("New pano requested " + this.getPano());
+						try {
+							this.beginLoadingPanos(this, this.getPano().replace("r", ""));
+						} catch {}
+					}
+				});
+				this.addListener("links_changed", () => {
+					console.log("Links changed " + this.getLinks());
+					if (!this.getPano().startsWith("r") && curNeighbors != null) {
+
+						// this.getLinks().push({
+						// 	description: "Google Sydney",
+						// 	heading: 25,
+						// 	pano: "reception",
+						//   });
+						
+						console.log(curNeighbors[0]);
+						//this.getLinks().push(curNeighbors[0])
+						for (const neighbor of curNeighbors) {
+							if (neighbor.pano != "") {
+								this.getLinks().push(neighbor);
+							}
+						}
+					}
+					
 				});
 			}
 		}
 
-		async appleLookAround() {
+		async getFirstPanoId(){
 			let isChecked = localStorage.getItem("applelookaroundchecked");
 			if (isChecked !== "true") return;
 
@@ -397,17 +439,46 @@ function initLookAround() {
 
 				lookAroundPanoId = closestObject.panoid;
 				regionId = closestObject.region_id;
+				curlat = closestObject.lat;
+				curlng = closestObject.lon;
+				curHeading = (closestObject.heading + headingCalibration) % 360;
+				curNeighbors = await getNeighborsPrimitive(curlat, curlng);
+				// Request pano to load
+				this.setPano("r"+lookAroundPanoId+"/"+regionId);
 
-				// TODO This can probably parallelized
-                console.log("Start loading Panos");
-				let pano0 =  loadPanoTest(lookAroundPanoId, regionId,0);
-				let pano1 =  loadPanoTest(lookAroundPanoId, regionId,1);
-				let pano2 =  loadPanoTest(lookAroundPanoId, regionId,2);
-				let pano3 =  loadPanoTest(lookAroundPanoId, regionId,3);
-				currentPanos = [await pano0, await pano1, await pano2, await pano3];
-				// TODO Run async and wait until all panos have loaded
-				this.setPano(lookAroundPanoId);
 			} catch {}
+
+		}
+
+		// param panoFullId is "panoId/regionId"
+		async beginLoadingPanos(t,panoFullId) {
+			if (panoFullId === currentPanoID || loadingInProgress) return;
+
+			console.log("Start loading Panos");
+			if (curNeighbors != null) {
+				for (const neighbor of curNeighbors) {
+					if (neighbor.pano.includes( panoFullId)) {
+						curlat = neighbor.lat;
+						curlng = neighbor.lng
+					}
+					
+				}
+				curNeighbors = await getNeighborsPrimitive(curlat, curlng);
+			}
+			loadingInProgress = true;
+			let pano0 =  loadTileForPano(panoFullId,0);
+			let pano1 =  loadTileForPano(panoFullId,1);
+			let pano2 =  loadTileForPano(panoFullId,2);
+			let pano3 =  loadTileForPano(panoFullId,3);
+			loadingInProgress = false;
+			currentPanos = [await pano0, await pano1, await pano2, await pano3];
+
+			currentPanoID = panoFullId;
+			newRound = false;
+			// Set another panoId to refresh the view
+			this.setPano(panoFullId);
+
+
 		}
 	}
 }
