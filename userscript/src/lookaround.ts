@@ -69,15 +69,19 @@ async function getClosestPanoAtCoords(lat:number, lon:number): Promise<PanoInfo>
 }
 
 
-async function getNeighbors(x,y, lat, lon) {
+async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 	try {
-		var panos = await (await fetch(Options.BASE_URL+"fullTileInfo/" + x + "/" + y + "/")).json();
-		panos.panos.sort((a,b) => Math.abs(GeoUtils.haversineDistance([lat, lon], [a.lat, a.lon])) - Math.abs(GeoUtils.haversineDistance([lat, lon], [b.lat, b.lon])));
-		
-		
-		console.log(panos);
-		return panos.slice(0,6);
+		let tile = GeoUtils.wgs84_to_tile_coord(panoInfo.lat, panoInfo.lon, 17);
+		var coverage = await getCoverageInMapTile(tile[0], tile[1]);
+		coverage = coverage.sort((a,b) => Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [a.lat, a.lon])) - Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [b.lat, b.lon])));
 
+		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
+		
+		let neighbors = coverage.slice(0,6);
+
+		console.log(neighbors);
+		console.log(coverage);
+		return neighbors
 	} catch (error) {
 		console.log(error);
 	}
@@ -169,5 +173,6 @@ async function loadTileForPano(panoFullId, x) {
 
 export {
     loadTileForPano,
-    getClosestPanoAtCoords
+    getClosestPanoAtCoords,
+	getNeighbors,
 }

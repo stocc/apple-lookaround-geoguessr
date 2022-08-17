@@ -26,6 +26,7 @@ Massive thank you to the following people:
 import * as Options from "./options";
 import * as Lookaround from "./lookaround";
 import { PanoInfo } from "./lookaround";
+import GeoUtils from "./geoutils";
 
 
 const MENU_HTML = `
@@ -149,7 +150,7 @@ var currentPano: PanoInfo = new PanoInfo("", "", "",0,0,0);
 var currentlyLoadedPanoTiles: Array<String> = [];
 var newRound = true;
 
-var curNeighbors = [];
+var curNeighbors: Array<PanoInfo> = [];
 
 
 
@@ -244,7 +245,14 @@ function initLookAround() {
 						
 						console.log(curNeighbors[0]);
 						//this.getLinks().push(curNeighbors[0])
-						for (const neighbor of curNeighbors) {
+						let neighborLinks = curNeighbors.map(neighbor => {return {
+							"descripton": "", 
+							"pano": "r"+neighbor.panoFullId(), 
+							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + currentPano.heading) % 360
+						}});
+						console.log("Pushing Links");
+						console.log(neighborLinks);
+						for (const neighbor of neighborLinks) {
 							if (neighbor.pano != "") {
 								this.getLinks().push(neighbor);
 							}
@@ -264,6 +272,9 @@ function initLookAround() {
 				//this.setPano("loading");
 				let lat = this.position.lat();
 				let lon = this.position.lng();
+
+				console.log("http://localhost:5000/#p="+lat+"/"+lon);
+
 				let lookAroundPanoId, regionId;
 
 				let closestObject = await Lookaround.getClosestPanoAtCoords(lat, lon);
@@ -281,26 +292,24 @@ function initLookAround() {
 		// param panoFullId is "panoId/regionId"
 		async beginLoadingPanos(_t,panoFullId) {
 			if (loadingInProgress) return;
+			
+			// Moved. Find the selected neigbor from ID.
+			if (curNeighbors.length > 0) {
+				let selectedNeighbor = curNeighbors.filter(n => n.panoFullId() == panoFullId)[0];
+				if (selectedNeighbor != null) {
+					currentPano = selectedNeighbor;
+				}
+			}
 
 			console.log("Start loading Panos");
 
-			// TODO Update lat,lng and heading
-/* 			if (curNeighbors != null) {
-				for (const neighbor of curNeighbors) {
-					if (neighbor.pano.includes( panoFullId)) {
-						curlat = neighbor.lat;
-						curlon = neighbor.lon
-					}
-					
-				}
-				curNeighbors = [];
-			}
- */			
 			loadingInProgress = true;
 			let pano0 =  Lookaround.loadTileForPano(panoFullId,0);
 			let pano1 =  Lookaround.loadTileForPano(panoFullId,1);
 			let pano2 =  Lookaround.loadTileForPano(panoFullId,2);
 			let pano3 =  Lookaround.loadTileForPano(panoFullId,3);
+			
+			curNeighbors = await (await Lookaround.getNeighbors(currentPano));
 			loadingInProgress = false;
 			currentlyLoadedPanoTiles = [await pano0, await pano1, await pano2, await pano3];
 

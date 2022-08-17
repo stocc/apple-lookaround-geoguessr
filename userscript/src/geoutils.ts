@@ -54,5 +54,20 @@ export default class GeoUtils {
 	}
 	
 
+	static heading(coords1, coords2) {
+		var lon1 = coords1[0];
+		var lat1 = coords1[1];
+	
+		var lon2 = coords2[0];
+		var lat2 = coords2[1];
+	
+		var dLon = (lon2 - lon1) * Math.PI / 180;
+		var y = Math.sin(dLon) * Math.cos(lat2);
+		var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+		var brng = Math.atan2(y, x);
+		brng = (brng + 2 * Math.PI) % (2 * Math.PI);
+		brng = brng * 180 / Math.PI;
+		return brng;
+	}
 }
 
