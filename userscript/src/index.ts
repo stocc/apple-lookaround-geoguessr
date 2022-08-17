@@ -248,7 +248,7 @@ function initLookAround() {
 						let neighborLinks = curNeighbors.map(neighbor => {return {
 							"descripton": "", 
 							"pano": "r"+neighbor.panoFullId(), 
-							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + currentPano.heading) % 360
+							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180 + currentPano.heading + 90) % 360
 						}});
 						console.log("Pushing Links");
 						console.log(neighborLinks);
@@ -273,7 +273,6 @@ function initLookAround() {
 				let lat = this.position.lat();
 				let lon = this.position.lng();
 
-				console.log("http://localhost:5000/#p="+lat+"/"+lon);
 
 				let lookAroundPanoId, regionId;
 
@@ -292,7 +291,7 @@ function initLookAround() {
 		// param panoFullId is "panoId/regionId"
 		async beginLoadingPanos(_t,panoFullId) {
 			if (loadingInProgress) return;
-			
+			console.warn("http://localhost:5000/#c=17/"+currentPano.lat+"/"+currentPano.lon+"&p="+currentPano.lat+"/"+currentPano.lon);
 			// Moved. Find the selected neigbor from ID.
 			if (curNeighbors.length > 0) {
 				let selectedNeighbor = curNeighbors.filter(n => n.panoFullId() == panoFullId)[0];

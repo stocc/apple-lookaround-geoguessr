@@ -76,12 +76,18 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 		coverage = coverage.sort((a,b) => Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [a.lat, a.lon])) - Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [b.lat, b.lon])));
 
 		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
-		
-		let neighbors = coverage.slice(0,6);
+
+		var neighbors = coverage.slice(0,10);
+		for (const n of neighbors) {
+			console.log(Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])))
+		}
+
+		let minDist = 0.005; // 5 meters, right?
+		neighbors = neighbors.filter(n => minDist < Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])));
 
 		console.log(neighbors);
 		console.log(coverage);
-		return neighbors
+		return neighbors.slice(0,6);
 	} catch (error) {
 		console.log(error);
 	}
@@ -117,13 +123,13 @@ async function loadTileForPano(panoFullId, x) {
         appleMapsPanoURL = Options.CORS_PROXY+appleMapsPanoURL;
 		// Step 2: Load the tile
 
-		console.log("Requesting tile " + [appleMapsPanoURL])
+		//console.log("Requesting tile " + [appleMapsPanoURL])
 
         var blobres = await fetch(appleMapsPanoURL);
         var blob = await blobres.blob();
 
 		// Step 3: Convert from HEIC to JPEG with heic2any
-		console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
+		//console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
         var jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
 
 
