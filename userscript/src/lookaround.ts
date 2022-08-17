@@ -1,10 +1,108 @@
 import * as Options from "./options";
 import { Authenticator } from "./auth";
-
+import GeoUtils from "./geoutils";
 
 const auth = new Authenticator();
 
-async function getUrlForTile(panoFullId: String, x: Number, resolution: Number) {
+class PanoInfo {
+	date: String;
+	panoId: String;
+	regionId: String;
+	heading: number;
+	lat: number;
+	lon: number;
+
+	constructor(date: String, panoId: String, regionId: String, heading: number, lat: number, lon: number) {
+		this.date = date;
+		this.panoId = panoId;
+		this.regionId = regionId;
+		this.heading = heading;
+		this.lat = lat;
+		this.lon = lon;
+	}
+
+}
+
+
+
+
+
+async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>> {
+	try {
+		let response = await fetch(Options.BASE_URL+"tiles/coverage/" + x + "/" + y + "/");
+		let data = await response.text();
+		let panos = JSON.parse(data);
+		let coverage = panos.map(pano => new PanoInfo(pano.date, pano.panoid, pano.region_id, pano.heading, pano.lat, pano.lon));
+		return coverage;
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+/*
+    @app.route("/closest/<float(signed=True):lat>/<float(signed=True):lon>/")
+    def closest_pano_to_coord(lat, lon):
+        x, y = wgs84_to_tile_coord(lat, lon, 17)
+        panos = get_coverage_tile(x, y)
+        if len(panos) == 0:
+            return jsonify(None)
+
+        smallest_distance = 9999999
+        closest = None
+        for pano in panos:
+            distance = haversine_distance(lat, lon, pano.lat, pano.lon)
+            if distance < smallest_distance:
+                smallest_distance = distance
+                closest = pano
+                #print(x,y)
+        return jsonify(date=closest.date,lat = closest.lat, lon = closest.lon, panoid = str(closest.panoid), region_id = str(closest.region_id), unknown10 = closest.unknown10, unknown11 = closest.unknown11, heading = closest.heading)
+
+
+*/
+
+async function getClosestPanoAtCoords(lat:number, lon:number): Promise<PanoInfo> {
+	try {
+		let tile = GeoUtils.wgs84_to_tile_coord(lat, lon, 17);
+		let coverage = await getCoverageInMapTile(tile[0], tile[1]);
+		if (coverage.length == 0) {
+			return null;
+		}
+		let smallestDistance = 9999999;
+		let closest = null;
+		for (let pano of coverage) {
+			let distance = GeoUtils.haversineDistance([lat, lon], [pano.lat, pano.lon]);
+			if (distance < smallestDistance) {
+				smallestDistance = distance;
+				closest = pano;
+			}
+		}
+	
+	
+		let old = await getClosestPanoAtCoords_old(lat, lon);
+		if (old.panoId != closest.panoId) {
+			console.log("old: " + old.panoId + " new: " + closest.panoId);
+		} else {
+			console.log("old: " + old.panoId + " new: " + closest.panoId + " same");
+		}
+	
+		return closest;
+	} catch (error) {
+		console.log(error);
+		return null;
+	}
+}
+
+
+async function getClosestPanoAtCoords_old(lat:number, lon:number): Promise<PanoInfo> {
+	let response = await fetch(Options.BASE_URL+"closest/" + lat + "/" + lon + "/");
+	let data = await response.text();
+	let closest = JSON.parse(data);
+	return new PanoInfo(closest.date, closest.panoid, closest.region_id, closest.heading, closest.lat, closest.lon);
+}
+
+
+
+async function getUrlForTile(panoFullId: String, x: number, resolution: number) {
     try {
         //if (!auth.hasSession()) {
             await auth.init();
@@ -86,50 +184,8 @@ async function loadTileForPano(panoFullId, x) {
 	}
 }
 
-async function getClosestPano(lat:Number, lon:Number) {
-    let response = await fetch(Options.BASE_URL+"closest/" + lat + "/" + lon + "/");
-    let data = await response.text();
-    return JSON.parse(data);
-}
-
-async function getNeighborsPrimitive(lat,lng) {
-	try {
-		let step = 0.001;
-		let dirs = [
-			[lat + step, lng], // north
-			[lat, lng + step], // east
-			[lat - step, lng], // south
-			[lat, lng - step], // west
-		]
-		var res = [{"heading":0, "pano":"", "description": "adf", "lat": 0, "lng": 0},{"heading":90, "pano":"", "lat": 0, "lng": 0},{"heading":180, "pano":"", "lat": 0, "lng": 0},{"heading":270, "pano":"", "lat": 0, "lng": 0}];
-		var i = 0;
-		for (const dir of dirs) {
-			let response = await fetch(Options.BASE_URL+"closest/" + dir[0] + "/" + dir[1] + "/");
-			let closestObject = await response.json();
-			
-			if (lat.toString() == closestObject.lat.toString() && lng.toString() == closestObject.lon.toString()){
-				console.log("Found same pano " + closestObject.panoid)
-				continue;
-			}
-
-			console.log("Found closest pano " + [closestObject.panoid, lat, lng, closestObject.lat, closestObject.lon])
-			res[i].pano = "r"+closestObject.panoid + "/" + closestObject.region_id;
-			res[i].lat = closestObject.lat;
-			res[i].lng = closestObject.lon;
-
-			i++;
-		}
-
-		console.log(res);
-		return res;
-	} catch (error) {
-		console.log(error);
-	}
-
-}
-
 
 export {
     loadTileForPano,
-    getClosestPano
+    getClosestPanoAtCoords
 }
