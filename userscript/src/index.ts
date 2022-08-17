@@ -231,8 +231,7 @@ function initLookAround() {
 					try {
 
 						// Detect if this is a new round. Normally, currentPano is already updated if this is a move in the same round.
-						if ((this.getPosition().lat() === currentPano.lat && this.getPosition().lng() === currentPano.lon) || 
-						GeoUtils.haversineDistance([this.getPosition().lat(), this.getPosition().lng()], [currentPano.lat, currentPano.lon]) < 1) {
+						if ((this.getPosition().lat() === currentPano.lat && this.getPosition().lng() === currentPano.lon)) {
 						
 							console.log("Position is currentPano => same round");
 							return;
