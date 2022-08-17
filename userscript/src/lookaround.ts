@@ -77,17 +77,11 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 
 		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
 
-		var neighbors = coverage.slice(0,10);
-		// for (const n of neighbors) {
-		// 	console.log(Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])))
-		// }
 
-		let minDist = 0.005; // 5 meters, right?
-		neighbors = neighbors.filter(n => minDist < Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])));
+		let minDist = 0.025; // 25 meters, right?
+		coverage = coverage.filter(n => minDist < Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])));
 
-		console.log(neighbors);
-		console.log(coverage);
-		return neighbors.slice(0,6);
+		return coverage.slice(0,6);
 	} catch (error) {
 		console.log(error);
 	}
@@ -130,6 +124,7 @@ async function loadTileForPano(panoFullId, x) {
 
 		// Step 3: Convert from HEIC to JPEG with heic2any
 		//console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
+		let startTime = Math.floor(Date.now() / 1000);
         var jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
 
 
@@ -162,11 +157,14 @@ async function loadTileForPano(panoFullId, x) {
 		}
 
 		img.src = URL.createObjectURL(await jpegblob);
-
+		let endTime = Math.floor(Date.now() / 1000);
+		console.log("Time to convert: " + (endTime - startTime) + " seconds");
 		// Wait for context to finish loading
 		// TODO: Is there a better way?
 		const delay = ms => new Promise(res => setTimeout(res, ms));
 		await delay(100);
+		let endTime2 = Math.floor(Date.now() / 1000);
+		console.log("Full time: " + (endTime - startTime) + " seconds");
 
 
 		return result;
