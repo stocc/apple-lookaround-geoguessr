@@ -152,6 +152,8 @@ var currentlyLoadedPanoTiles: Array<String> = [];
 var curNeighbors: Array<PanoInfo> = [];
 
 
+// When moving, this is used to keep the current viewport while loading the next pano
+var oldHeading = 0;
 
 
 
@@ -163,8 +165,10 @@ var curNeighbors: Array<PanoInfo> = [];
 const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 
 	// Currently loading first image in a round, return a blank image
-	if (pano.startsWith("r")){
-		return 'data:image/jpeg;base64,'	
+	//if (pano.startsWith("r")){
+	if (currentlyLoadedPanoTiles.length === 0) {
+	
+		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 	}
 
 	return currentlyLoadedPanoTiles[tileX];
@@ -189,7 +193,16 @@ const getPano = (pano) => {
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * Options.EXTENSION_FACTOR)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
-			centerHeading: (currentPano.heading + Options.HEADING_CALIBRATION) % 360,
+			centerHeading: function (){
+				// While loading: use the old heading so that when moving, you keep the same viewport while loading the next pano
+				if (loadingInProgress) {
+					return oldHeading;
+				} else {
+					var newHeading = (currentPano.heading + Options.HEADING_CALIBRATION) % 360;
+					oldHeading = newHeading;
+					return newHeading;
+				}
+			}(),
 			getTileUrl: getCustomPanoramaTileUrl,
 		},
 	};
@@ -226,6 +239,8 @@ function initLookAround() {
 						}
 
 						console.warn("Position actually changed => new round; full reload");
+						currentlyLoadedPanoTiles = []; // Causes black screen again
+						
 						this.getFirstPanoId();
 					} catch (e) {
 						console.error(e);
@@ -274,8 +289,6 @@ function initLookAround() {
 			if (isChecked !== "true") return;
 
 			try {
-				//currentPanos = [loading,loading,loading,loading];
-				//this.setPano("loading");
 				let lat = this.position.lat();
 				let lon = this.position.lng();
 
