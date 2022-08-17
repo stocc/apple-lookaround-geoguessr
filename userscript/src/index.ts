@@ -148,7 +148,6 @@ function injectMenu() {
 var loadingInProgress = false;
 var currentPano: PanoInfo = new PanoInfo("", "", "",0,0,0);
 var currentlyLoadedPanoTiles: Array<String> = [];
-var newRound = true;
 
 var curNeighbors: Array<PanoInfo> = [];
 
@@ -164,7 +163,7 @@ var curNeighbors: Array<PanoInfo> = [];
 const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 
 	// Currently loading first image in a round, return a blank image
-	if (pano.startsWith("r")){  //&& (currentPanos.length == 0 || newRound)  ) {
+	if (pano.startsWith("r")){
 		return 'data:image/jpeg;base64,'	
 	}
 
@@ -179,11 +178,7 @@ const getPano = (pano) => {
 		location: {
 			pano: pano,
 			description: "Apple Look Around",
-/* 			latLng: {
-				lat: curlat,
-				lng: curlon
-			} */
-
+			latLng: new google.maps.LatLng(currentPano.lat, currentPano.lon),
 		},
 		links: [],
 		// The text for the copyright control.
@@ -221,9 +216,20 @@ function initLookAround() {
 				this.addListener("position_changed", () => {
 					console.log("Position changed " + this.getPosition());
 					try {
-						newRound = true;
+
+						// Detect if this is a new round. Normally, currentPano is already updated if this is a move in the same round.
+						if ((this.getPosition().lat() === currentPano.lat && this.getPosition().lng() === currentPano.lon) || 
+						GeoUtils.haversineDistance([this.getPosition().lat(), this.getPosition().lng()], [currentPano.lat, currentPano.lon]) < 1) {
+						
+							console.log("Position is currentPano => same round");
+							return;
+						}
+
+						console.warn("Position actually changed => new round; full reload");
 						this.getFirstPanoId();
-					} catch {}
+					} catch (e) {
+						console.error(e);
+					}
 				});
 
 				// Called after setPano(). If the pano is "r<panoId>/<regioId>", then we load the tiles for that pano.
@@ -312,7 +318,6 @@ function initLookAround() {
 			loadingInProgress = false;
 			currentlyLoadedPanoTiles = [await pano0, await pano1, await pano2, await pano3];
 
-			newRound = false;
 			// Set another panoId to refresh the view
 			this.setPano(panoFullId);
 
