@@ -174,8 +174,8 @@ function displayPano(pano) {
   panoInfo.style.display = "block";
   panoInfo.innerHTML = `
     <strong>${pano.panoid}</strong>/${pano.region_id}<br>
-    <small>${pano.lat.toFixed(5)}, ${pano.lon.toFixed(5)} |
-    ${pano.date}</small>
+    <small>${pano.lat.toFixed(5)}, ${pano.lon.toFixed(5)}, ${pano.heading.toFixed(0)} |
+    ${pano.date}</small> <br> <a href="http://maps.apple.com/?q=${pano.lat},${pano.lon}" target="_blank">Open in Apple Maps</a>
   `;
 }
 
