@@ -73,6 +73,19 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 	try {
 		let tile = GeoUtils.wgs84_to_tile_coord(panoInfo.lat, panoInfo.lon, 17);
 		var coverage = await getCoverageInMapTile(tile[0], tile[1]);
+		
+		console.log(coverage);
+		// TODO Only extend when needed (we're close to the edge of the tile)
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1]));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] - 1, tile[1]));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0], tile[1] + 1));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0], tile[1] - 1));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] - 1, tile[1] - 1));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1] - 1));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] - 1, tile[1] + 1));
+		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1] + 1));
+		console.log(coverage);
+		
 		coverage = coverage.sort((a,b) => Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [a.lat, a.lon])) - Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [b.lat, b.lon])));
 
 		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
