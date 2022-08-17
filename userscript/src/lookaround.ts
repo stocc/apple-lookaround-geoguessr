@@ -78,9 +78,9 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
 
 		var neighbors = coverage.slice(0,10);
-		for (const n of neighbors) {
-			console.log(Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])))
-		}
+		// for (const n of neighbors) {
+		// 	console.log(Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])))
+		// }
 
 		let minDist = 0.005; // 5 meters, right?
 		neighbors = neighbors.filter(n => minDist < Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])));

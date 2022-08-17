@@ -248,7 +248,7 @@ function initLookAround() {
 						let neighborLinks = curNeighbors.map(neighbor => {return {
 							"descripton": "", 
 							"pano": "r"+neighbor.panoFullId(), 
-							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180 + currentPano.heading + 90) % 360
+							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180) % 360,
 						}});
 						console.log("Pushing Links");
 						console.log(neighborLinks);
