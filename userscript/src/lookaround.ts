@@ -147,24 +147,28 @@ async function getUrlForTile(panoFullId: String, x: number, resolution: number) 
 async function loadTileForPano(panoFullId, x) {
 	try {
 
-		// Step 1: Get the URL of the tile to load
-		// New endpoint /panourl in the python server returns just the Apple URL for the pano
+		var jpegblob;
+		if (Options.CONVERT_LOCALLY) {
+			// Step 1: Get the URL of the tile to load
+			// New endpoint /panourl in the python server returns just the Apple URL for the pano
 
-        var appleMapsPanoURL = await getUrlForTile(panoFullId, x, Options.RESOLUTION_SETTING);
-        appleMapsPanoURL = Options.CORS_PROXY+appleMapsPanoURL;
-		// Step 2: Load the tile
+			var appleMapsPanoURL = await getUrlForTile(panoFullId, x, Options.RESOLUTION_SETTING);
+			appleMapsPanoURL = Options.CORS_PROXY+appleMapsPanoURL;
+			// Step 2: Load the tile
 
-		//console.log("Requesting tile " + [appleMapsPanoURL])
+			//console.log("Requesting tile " + [appleMapsPanoURL])
 
-        var blobres = await fetch(appleMapsPanoURL);
-        var blob = await blobres.blob();
+			var blobres = await fetch(appleMapsPanoURL);
+			var blob = await blobres.blob();
 
-		// Step 3: Convert from HEIC to JPEG with heic2any
-		//console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
-		//let startTime = Math.floor(Date.now() / 1000);
-        var jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
+			// Step 3: Convert from HEIC to JPEG with heic2any
+			//console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
+			//let startTime = Math.floor(Date.now() / 1000);
+			jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
+		} else {
 
-
+			jpegblob = await (await fetch(Options.BASE_URL+"pano/" + panoFullId + "/" + Options.RESOLUTION_SETTING + "/" + x + "/")).blob()
+		}
 		// Step 4: Process image
 		 
 		// Cut off the overlap from the right of the tile using canvas

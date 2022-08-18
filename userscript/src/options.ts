@@ -9,6 +9,9 @@ const HEADING_CALIBRATION = 45;
 
 const EXTENSION_FACTOR = 2.12; // TODO Play around with this value for best results with image stretching
 
+const BASE_URL = "https://lar-test2.herokuapp.com/";
+const CONVERT_LOCALLY = false;
+
 const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
 const APPLE_MAPS_TILE_ENDPOINT = "https://gspe72-ssl.ls.apple.com/mnn_us/"
@@ -80,4 +83,6 @@ export {
 	CORS_PROXY,
 	APPLE_MAPS_TILE_ENDPOINT,
 	RESOLUTION_PROFILES,
+	BASE_URL,
+	CONVERT_LOCALLY
 };
