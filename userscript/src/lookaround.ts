@@ -91,7 +91,7 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 		coverage = coverage.filter(pano => pano.panoFullId() != panoInfo.panoFullId());
 
 
-		let minDist = 0.060; // 60 meters
+		let minDist = 0.030; // 30 meters
 		let maxDist = 0.300; // 300 meters
 		
 		coverage = coverage.filter(n => (
