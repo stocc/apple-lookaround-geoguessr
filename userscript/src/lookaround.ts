@@ -125,7 +125,7 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 			Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [n.lat, n.lon])) < maxDist
 		));
 
-		return coverage.slice(0,6);
+		return coverage.slice(0,8);
 	} catch (error) {
 		console.log(error);
 	}
