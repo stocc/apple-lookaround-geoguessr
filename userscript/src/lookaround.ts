@@ -5,6 +5,8 @@ import Proto from "./proto";
 
 const auth = new Authenticator();
 
+var tileCache = {};
+
 export class PanoInfo {
 	date: String;
 	panoId: String;
@@ -46,6 +48,11 @@ async function getCoverageTileRaw(tile_x:number, tile_y:number) {
 
 async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>> {
 	try {
+
+		if (tileCache[""+x + "/" + y]) {
+			return tileCache[x + "/" + y];
+		}
+
 		let response = await getCoverageTileRaw(x, y);
 
 		var coverage = [];
@@ -57,7 +64,7 @@ async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>
 
 			coverage.push(p);
 		}
-
+		tileCache[""+x + "/" + y] = coverage;
 		return coverage;
 	} catch (error) {
 		console.log(error);
