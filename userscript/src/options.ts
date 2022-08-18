@@ -9,10 +9,6 @@ const HEADING_CALIBRATION = 40;
 
 const EXTENSION_FACTOR = 2; // TODO Play around with this value for best results with image stretching
 
-// Python Backend API URL
-const BASE_URL = "https://lookaround-alpha.herokuapp.com/"
-//const BASE_URL = "http://localhost:5001/"
-
 const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
 const APPLE_MAPS_TILE_ENDPOINT = "https://gspe72-ssl.ls.apple.com/mnn_us/"
@@ -81,7 +77,6 @@ export {
 	RESOLUTION_SETTING,
 	HEADING_CALIBRATION,
 	EXTENSION_FACTOR,
-	BASE_URL,
 	CORS_PROXY,
 	APPLE_MAPS_TILE_ENDPOINT,
 	RESOLUTION_PROFILES,

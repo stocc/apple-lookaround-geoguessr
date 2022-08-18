@@ -1,6 +1,7 @@
 // Blatantly stolen from https://github.com/sk-zk/lookaround-map/blob/main/static/auth.js
 
-import { BASE_URL } from "./options";
+import { CORS_PROXY } from "./options";
+import Proto from "./proto";
 
 const TOKEN_P1 = "4cjLaD4jGRwlQ9U"
 const MANIFEST_URL = "https://gspe35-ssl.ls.apple.com/geo_manifest/dynamic/config?application=geod" +
@@ -9,13 +10,11 @@ const MANIFEST_URL = "https://gspe35-ssl.ls.apple.com/geo_manifest/dynamic/confi
 
 export class Authenticator {
     
-    private tokenP2 : string;
     private sessionId : string;
     private resourceManifest: any;
     
     
     constructor() {
-        this.tokenP2 = null;
         this.resourceManifest = null;
         this.sessionId = null;
     }
@@ -33,11 +32,22 @@ export class Authenticator {
         return this.sessionId != null;
     }
 
+
+    async getResourceManifest() {
+
+        if (this.resourceManifest == null) {
+            this.resourceManifest = await this.#getResourceManifest();
+        }
+        return this.resourceManifest;
+    }
+
     async authenticateUrl(url) {
         const urlObj = new URL(url);
-
+        
+        let rm = await this.getResourceManifest();
+        console.error(rm)
         const tokenP3 = this.#generateTokenP3();
-        const token = TOKEN_P1 + this.tokenP2 + tokenP3;
+        const token = TOKEN_P1 + rm.tokenP2 + tokenP3;
         const timestamp = Math.floor(Date.now() / 1000) + 4200;
         const separator = urlObj.search ? "&" : "?";
 
@@ -66,11 +76,9 @@ export class Authenticator {
     }
 
     async #getResourceManifest() {
-        // TODO get the manifest clientside instead of this temp solution
-        // bc I didn't want to deal with protobuf right now
-        const response = await fetch(BASE_URL+"tokenp2/");
-        this.tokenP2 = await response.json();
-        return null;
+        const response = await fetch(CORS_PROXY+MANIFEST_URL);
+        let pb = await response.arrayBuffer();
+        return await Proto.parseResourceManifest(pb);
     }
 
     #generateTokenP3() {

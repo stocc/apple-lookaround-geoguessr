@@ -10,6 +10,8 @@
 // @license      MIT
 // @run-at       document-start
 // @require 	 https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.3/heic2any.min.js
+// @require 	 https://cdn.jsdelivr.net/npm/protobufjs@7.0.0/index.min.js
+// @require		 https://cdn.jsdelivr.net/npm/long@5/umd/index.js
 
 // ==/UserScript==
 /*
@@ -28,6 +30,8 @@ import * as Lookaround from "./lookaround";
 import { PanoInfo } from "./lookaround";
 import GeoUtils from "./geoutils";
 
+protobuf.util.Long = Long;
+protobuf.configure();
 
 const MENU_HTML = `
 <div class="start-standard-game_settings__x94PU">

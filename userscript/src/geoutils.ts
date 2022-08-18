@@ -28,7 +28,70 @@ export default class GeoUtils {
 	
 		return d;
 	}
+
+	static radians_to_degrees(radians) {
+	var pi = Math.PI;
+	return radians * (180/pi);
+	}
+          
+
+
+	static headingFromUnknowns(unknown10, unknown11) {
+	    let westmin = 1
+		let westmax = 2159
+		let eastmin = 16383 // looking (north/south) and very slightly east
+		let eastmax = 14318 // looking slightly (north/south) directly east
+
+		let northmin = 8204 // this is likely lower
+		let northmax = 6054
+		let southmin = 8204 // this is likely lower
+		let southmax = 10173
+
+
+		var ew=0
+		if (unknown10 < westmax){
+			ew = -((unknown10 - westmin) / (westmax - westmin))
+		} else if (unknown10 > eastmax){
+			ew = ((unknown10 - eastmin) / (eastmax - eastmin))
+		}
+
+		var ns=0
+		if (unknown11 <= northmin){
+			ns = ((unknown11 - northmin) / (northmax - northmin))
+		} else {
+			ns = -((unknown11 - southmin) / (southmax - southmin))
+		}
+
+		var r =  GeoUtils.radians_to_degrees(Math.atan2(ew,ns))
+		if (r < 0){
+			r += 360
+		}
+
+		return r
+	}
 	
+
+	static mercator_to_wgs84(x, y) {
+	    let lat = (2 * Math.atan(Math.exp((y - 128) / -(256 / (2 * Math.PI)))) - Math.PI / 2) / (Math.PI / 180)
+		let lon = (x - 128) / (256 / 360)
+		return [lat, lon];
+
+	}
+
+	static tile_coord_to_wgs84(x, y, z) {
+	    let scale = 1 << z
+		let pixel_coord = [x * TILE_SIZE, y * TILE_SIZE];
+		let world_coord = [pixel_coord[0] / scale, pixel_coord[1] / scale];
+		let lat_lon = GeoUtils.mercator_to_wgs84(world_coord[0], world_coord[1])
+		return [lat_lon[0], lat_lon[1]];
+	}
+
+	static protobuf_tile_offset_to_wsg84(x_offset, y_offset, tile_x, tile_y) {
+		let pano_x = tile_x + (x_offset / 64.0) / (TILE_SIZE - 1)
+		let pano_y = tile_y + (255 - (y_offset / 64.0)) / (TILE_SIZE - 1)
+		let coords = GeoUtils.tile_coord_to_wgs84(pano_x, pano_y, 17)
+		return coords
+	}
 	
 	static wgs84_to_mercator(lat, lon) {
 		var siny = Math.sin(lat * Math.PI / 180);

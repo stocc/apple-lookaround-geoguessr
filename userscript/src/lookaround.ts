@@ -1,6 +1,7 @@
 import * as Options from "./options";
 import { Authenticator } from "./auth";
 import GeoUtils from "./geoutils";
+import Proto from "./proto";
 
 const auth = new Authenticator();
 
@@ -29,14 +30,36 @@ export class PanoInfo {
 
 
 
+async function getCoverageTileRaw(tile_x:number, tile_y:number) {
+	let headers = new Headers({
+        "maps-tile-style": "style=57&size=2&scale=0&v=0&preflight=2",
+        "maps-tile-x": tile_x.toString(),
+        "maps-tile-y": tile_y.toString(),
+        "maps-tile-z": "17",
+        "maps-auth-token": "w31CPGRO/n7BsFPh8X7kZnFG0LDj9pAuR8nTtH3xhH8=",
+    });
+    let response = await (await fetch(Options.CORS_PROXY+"https://gspe76-ssl.ls.apple.com/api/tile?", {headers: headers})).arrayBuffer();
+    let tile = await Proto.parseMapTile(response);
+    return tile
+}
 
 
 async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>> {
 	try {
-		let response = await fetch(Options.BASE_URL+"tiles/coverage/" + x + "/" + y + "/");
-		let data = await response.text();
-		let panos = JSON.parse(data);
-		let coverage = panos.map(pano => new PanoInfo(pano.date, pano.panoid, pano.region_id, pano.heading, pano.lat, pano.lon));
+		let response = await getCoverageTileRaw(x, y);
+
+		var coverage = [];
+		for (let pano of response.pano) {
+			let coords = GeoUtils.protobuf_tile_offset_to_wsg84(pano.unknown4.longitudeOffset, pano.unknown4.latitudeOffset, x,y);
+
+			let p =  new PanoInfo(pano.timestamp.toString(), pano.panoid.toString(), response.unknown13[pano.regionIdIdx].regionId.toString(), 
+			GeoUtils.headingFromUnknowns(pano.unknown4.unknown10, pano.unknown4.unknown11), coords[0], coords[1]);
+
+			coverage.push(p);
+		}
+
+
+		console.log(coverage);
 		return coverage;
 	} catch (error) {
 		console.log(error);

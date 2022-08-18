@@ -1,5 +1,6 @@
+
+let mapTile = `
 syntax = "proto3";
-package streetlevel;
 
 message MapTile {
   repeated Pano pano = 1;
@@ -79,6 +80,54 @@ message MapTile {
     int32 z = 3;
   }
   
+}`
+
+let resourceManifest = `
+syntax = "proto3";
+
+message ResourceManifest {
+	repeated StyleConfig style_config = 2;
+	string token_p2 = 30;
+	string cache_base_url = 31;
+	repeated CacheFile cache_file = 72;
+	repeated string cache_file_2 = 9;
+
+	message CacheFile {
+		string file_name = 2;
+	}
+
+	message StyleConfig {
+		string url_prefix_1 = 1;
+		string url_prefix_2 = 9;
+		StyleID style_id = 3;
+
+		enum StyleID {
+			_ = 0;
+			C3MM_1 = 14;
+			C3M = 15;
+			DTM_1 = 16;
+			DTM_2 = 17;
+			C3MM_2 = 52;
+		}
+	}	
 }
+`
+
+export default class Proto {
 
 
+  static async parseResourceManifest(payload) {
+      const array = new Uint8Array(payload);
+      let manifest = protobuf.parse(resourceManifest).root.lookup("ResourceManifest")
+      let message = manifest.decode(array)
+
+      return message;
+  }
+
+  static async parseMapTile(payload) {
+      const array = new Uint8Array(payload);
+      let manifest = protobuf.parse(mapTile).root.lookup("MapTile")
+      let message = manifest.decode(array)
+      return message
+  }
+}
