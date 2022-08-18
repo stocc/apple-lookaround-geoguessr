@@ -48,8 +48,6 @@ const MENU_HTML = `
 `;
 
 
-
-
 const isGamePage = () => location.pathname.startsWith("/challenge/") || location.pathname.startsWith("/results/") ||
 						location.pathname.startsWith("/game/")|| location.pathname.startsWith("/battle-royale/") ||
 						location.pathname.startsWith("/duels/") || location.pathname.startsWith("/team-duels/") ||
@@ -266,16 +264,14 @@ function initLookAround() {
 					if (!this.getPano().startsWith("r") && curNeighbors != null) {
 
 
-						
-						console.log(curNeighbors[0]);
-						//this.getLinks().push(curNeighbors[0])
+												//this.getLinks().push(curNeighbors[0])
 						let neighborLinks = curNeighbors.map(neighbor => {return {
 							"descripton": "", 
 							"pano": "r"+neighbor.panoFullId(), 
 							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180) % 360,
 						}});
-						console.log("Pushing Links");
-						console.log(neighborLinks);
+						console.log("Pushing Links " + neighborLinks.length);
+
 						for (const neighbor of neighborLinks) {
 							if (neighbor.pano != "") {
 								this.getLinks().push(neighbor);
@@ -313,7 +309,7 @@ function initLookAround() {
 		// param panoFullId is "panoId/regionId"
 		async beginLoadingPanos(_t,panoFullId) {
 			if (loadingInProgress) return;
-			console.warn("http://localhost:5000/#c=17/"+currentPano.lat+"/"+currentPano.lon+"&p="+currentPano.lat+"/"+currentPano.lon);
+			//console.warn("http://localhost:5000/#c=17/"+currentPano.lat+"/"+currentPano.lon+"&p="+currentPano.lat+"/"+currentPano.lon);
 			// Moved. Find the selected neigbor from ID.
 			if (curNeighbors.length > 0) {
 				let selectedNeighbor = curNeighbors.filter(n => n.panoFullId() == panoFullId)[0];

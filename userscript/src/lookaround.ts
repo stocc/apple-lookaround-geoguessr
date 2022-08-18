@@ -58,8 +58,6 @@ async function getCoverageInMapTile(x:number, y:number): Promise<Array<PanoInfo>
 			coverage.push(p);
 		}
 
-
-		console.log(coverage);
 		return coverage;
 	} catch (error) {
 		console.log(error);
@@ -97,7 +95,6 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 		let tile = GeoUtils.wgs84_to_tile_coord(panoInfo.lat, panoInfo.lon, 17);
 		var coverage = await getCoverageInMapTile(tile[0], tile[1]);
 		
-		console.log(coverage);
 		// TODO Only extend when needed (we're close to the edge of the tile)
 		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1]));
 		coverage = coverage.concat(await getCoverageInMapTile(tile[0] - 1, tile[1]));
@@ -107,7 +104,6 @@ async function getNeighbors(panoInfo: PanoInfo): Promise<Array<PanoInfo>> {
 		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1] - 1));
 		coverage = coverage.concat(await getCoverageInMapTile(tile[0] - 1, tile[1] + 1));
 		coverage = coverage.concat(await getCoverageInMapTile(tile[0] + 1, tile[1] + 1));
-		console.log(coverage);
 		
 		coverage = coverage.sort((a,b) => Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [a.lat, a.lon])) - Math.abs(GeoUtils.haversineDistance([panoInfo.lat, panoInfo.lon], [b.lat, b.lon])));
 
@@ -165,7 +161,7 @@ async function loadTileForPano(panoFullId, x) {
 
 		// Step 3: Convert from HEIC to JPEG with heic2any
 		//console.log("Fetched tile, converting and resizing... " + [appleMapsPanoURL])
-		let startTime = Math.floor(Date.now() / 1000);
+		//let startTime = Math.floor(Date.now() / 1000);
         var jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
 
 
@@ -198,14 +194,15 @@ async function loadTileForPano(panoFullId, x) {
 		}
 
 		img.src = URL.createObjectURL(await jpegblob);
-		let endTime = Math.floor(Date.now() / 1000);
-		console.log("Time to convert: " + (endTime - startTime) + " seconds");
+		
+		//let endTime = Math.floor(Date.now() / 1000);
+		//console.log("Time to convert: " + (endTime - startTime) + " seconds");
 		// Wait for context to finish loading
 		// TODO: Is there a better way?
 		const delay = ms => new Promise(res => setTimeout(res, ms));
 		await delay(100);
-		let endTime2 = Math.floor(Date.now() / 1000);
-		console.log("Full time: " + (endTime - startTime) + " seconds");
+		//let endTime2 = Math.floor(Date.now() / 1000);
+		//console.log("Full time: " + (endTime - startTime) + " seconds");
 
 
 		return result;

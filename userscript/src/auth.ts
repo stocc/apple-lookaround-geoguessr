@@ -8,14 +8,15 @@ const MANIFEST_URL = "https://gspe35-ssl.ls.apple.com/geo_manifest/dynamic/confi
     "&application_version=1&country_code=US&hardware=MacBookPro11,2&os=osx" +
     "&os_build=20B29&os_version=11.0.1"
 
+var GLOBAL_TOKENP2 = undefined;
+
+
 export class Authenticator {
     
     private sessionId : string;
-    private resourceManifest: any;
     
     
     constructor() {
-        this.resourceManifest = null;
         this.sessionId = null;
     }
 
@@ -25,7 +26,6 @@ export class Authenticator {
 
     async refreshCredentials() {
         this.sessionId = this.#generateSessionId();
-        this.resourceManifest = await this.#getResourceManifest();
     }
 
     hasSession() {
@@ -33,19 +33,18 @@ export class Authenticator {
     }
 
 
-    async getResourceManifest() {
+    async getTokenP2() {
 
-        if (this.resourceManifest == null) {
-            this.resourceManifest = await this.#getResourceManifest();
+        if (GLOBAL_TOKENP2 == undefined) {
+            GLOBAL_TOKENP2 = (await this.getResourceManifest()).tokenP2;
         }
-        return this.resourceManifest;
+        return GLOBAL_TOKENP2;
     }
 
     async authenticateUrl(url) {
         const urlObj = new URL(url);
         
         let rm = await this.getResourceManifest();
-        console.error(rm)
         const tokenP3 = this.#generateTokenP3();
         const token = TOKEN_P1 + rm.tokenP2 + tokenP3;
         const timestamp = Math.floor(Date.now() / 1000) + 4200;
@@ -75,7 +74,7 @@ export class Authenticator {
         return id;
     }
 
-    async #getResourceManifest() {
+    async getResourceManifest() {
         const response = await fetch(CORS_PROXY+MANIFEST_URL);
         let pb = await response.arrayBuffer();
         return await Proto.parseResourceManifest(pb);
