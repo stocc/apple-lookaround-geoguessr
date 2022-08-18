@@ -25,6 +25,8 @@ Massive thank you to the following people:
 // BEGIN CODE SECTION
 import * as Options from "./options";
 import * as Lookaround from "./lookaround";
+import { PanoInfo } from "./lookaround";
+import GeoUtils from "./geoutils";
 
 
 const MENU_HTML = `
@@ -144,14 +146,14 @@ function injectMenu() {
 // TODO: Is there a better way to do this?
 
 var loadingInProgress = false;
-var currentPanoID = "";
-var currentPanos: Array<String> = [];
-var newRound = true;
-var curlat = 0;
-var curlon = 0;
-var curNeighbors = [];
-var curHeading = 0;
+var currentPano: PanoInfo = new PanoInfo("", "", "",0,0,0);
+var currentlyLoadedPanoTiles: Array<String> = [];
 
+var curNeighbors: Array<PanoInfo> = [];
+
+
+// When moving, this is used to keep the current viewport while loading the next pano
+var oldHeading = 0;
 
 
 
@@ -163,11 +165,13 @@ var curHeading = 0;
 const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
 
 	// Currently loading first image in a round, return a blank image
-	if (pano.startsWith("r")){  //&& (currentPanos.length == 0 || newRound)  ) {
-		return 'data:image/jpeg;base64,'	
+	//if (pano.startsWith("r")){
+	if (currentlyLoadedPanoTiles.length === 0) {
+	
+		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 	}
 
-	return currentPanos[tileX];
+	return currentlyLoadedPanoTiles[tileX];
 
 };
 
@@ -178,11 +182,7 @@ const getPano = (pano) => {
 		location: {
 			pano: pano,
 			description: "Apple Look Around",
-/* 			latLng: {
-				lat: curlat,
-				lng: curlon
-			} */
-
+			latLng: new google.maps.LatLng(currentPano.lat, currentPano.lon),
 		},
 		links: [],
 		// The text for the copyright control.
@@ -193,7 +193,16 @@ const getPano = (pano) => {
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * Options.EXTENSION_FACTOR)),
 			// The heading in degrees at the origin of the panorama
 			// tile set.
-			centerHeading: curHeading,
+			centerHeading: function (){
+				// While loading: use the old heading so that when moving, you keep the same viewport while loading the next pano
+				if (loadingInProgress) {
+					return oldHeading;
+				} else {
+					var newHeading = (currentPano.heading + Options.HEADING_CALIBRATION) % 360;
+					oldHeading = newHeading;
+					return newHeading;
+				}
+			}(),
 			getTileUrl: getCustomPanoramaTileUrl,
 		},
 	};
@@ -220,18 +229,29 @@ function initLookAround() {
 				this.addListener("position_changed", () => {
 					console.log("Position changed " + this.getPosition());
 					try {
-						newRound = true;
+
+						// Detect if this is a new round. Normally, currentPano is already updated if this is a move in the same round.
+						if ((this.getPosition().lat() === currentPano.lat && this.getPosition().lng() === currentPano.lon)) {
+						
+							console.log("Position is currentPano => same round");
+							return;
+						}
+
+						console.warn("Position actually changed => new round; full reload");
+						currentlyLoadedPanoTiles = []; // Causes black screen again
+						
 						this.getFirstPanoId();
-					} catch {}
+					} catch (e) {
+						console.error(e);
+					}
 				});
 
 				// Called after setPano(). If the pano is "r<panoId>/<regioId>", then we load the tiles for that pano.
 				// If it doesn't start with "r", then loading is done.
 				this.addListener("pano_changed", () => {
-					console.log("Pano changed " +this.getPano() + " " + currentPanoID);
-					if (this.getPano() != null && this.getPano() != currentPanoID && this.getPano() != "" && this.getPano().startsWith("r")) {
+					console.log("Pano changed " +this.getPano());
+					if (this.getPano() != null && this.getPano() != currentPano.panoFullId() && this.getPano() != "" && this.getPano().startsWith("r")) {
 						console.log("New pano requested " + this.getPano());
-						currentPanoID = this.getPano();
 						try {
 							this.beginLoadingPanos(this, this.getPano().replace("r", ""));
 						} catch {}
@@ -245,7 +265,14 @@ function initLookAround() {
 						
 						console.log(curNeighbors[0]);
 						//this.getLinks().push(curNeighbors[0])
-						for (const neighbor of curNeighbors) {
+						let neighborLinks = curNeighbors.map(neighbor => {return {
+							"descripton": "", 
+							"pano": "r"+neighbor.panoFullId(), 
+							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180) % 360,
+						}});
+						console.log("Pushing Links");
+						console.log(neighborLinks);
+						for (const neighbor of neighborLinks) {
 							if (neighbor.pano != "") {
 								this.getLinks().push(neighbor);
 							}
@@ -261,20 +288,18 @@ function initLookAround() {
 			if (isChecked !== "true") return;
 
 			try {
-				//currentPanos = [loading,loading,loading,loading];
-				//this.setPano("loading");
 				let lat = this.position.lat();
 				let lon = this.position.lng();
+
+
 				let lookAroundPanoId, regionId;
 
 				let closestObject = await Lookaround.getClosestPanoAtCoords(lat, lon);
 
 				lookAroundPanoId = closestObject.panoId;
 				regionId = closestObject.regionId;
-				curlat = closestObject.lat;
-				curlon = closestObject.lon;
-				curHeading = (closestObject.heading + Options.HEADING_CALIBRATION) % 360;
 				// Request pano to load
+				currentPano = closestObject;
 				this.setPano("r"+lookAroundPanoId+"/"+regionId);
 
 			} catch {}
@@ -283,32 +308,28 @@ function initLookAround() {
 
 		// param panoFullId is "panoId/regionId"
 		async beginLoadingPanos(_t,panoFullId) {
-			if (panoFullId === currentPanoID || loadingInProgress) return;
+			if (loadingInProgress) return;
+			console.warn("http://localhost:5000/#c=17/"+currentPano.lat+"/"+currentPano.lon+"&p="+currentPano.lat+"/"+currentPano.lon);
+			// Moved. Find the selected neigbor from ID.
+			if (curNeighbors.length > 0) {
+				let selectedNeighbor = curNeighbors.filter(n => n.panoFullId() == panoFullId)[0];
+				if (selectedNeighbor != null) {
+					currentPano = selectedNeighbor;
+				}
+			}
 
 			console.log("Start loading Panos");
 
-			// TODO Update lat,lng and heading
-/* 			if (curNeighbors != null) {
-				for (const neighbor of curNeighbors) {
-					if (neighbor.pano.includes( panoFullId)) {
-						curlat = neighbor.lat;
-						curlon = neighbor.lon
-					}
-					
-				}
-				curNeighbors = [];
-			}
- */			
 			loadingInProgress = true;
 			let pano0 =  Lookaround.loadTileForPano(panoFullId,0);
 			let pano1 =  Lookaround.loadTileForPano(panoFullId,1);
 			let pano2 =  Lookaround.loadTileForPano(panoFullId,2);
 			let pano3 =  Lookaround.loadTileForPano(panoFullId,3);
+			
+			curNeighbors = await (await Lookaround.getNeighbors(currentPano));
 			loadingInProgress = false;
-			currentPanos = [await pano0, await pano1, await pano2, await pano3];
+			currentlyLoadedPanoTiles = [await pano0, await pano1, await pano2, await pano3];
 
-			currentPanoID = panoFullId;
-			newRound = false;
 			// Set another panoId to refresh the view
 			this.setPano(panoFullId);
 

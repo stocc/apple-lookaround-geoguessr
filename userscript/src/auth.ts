@@ -34,8 +34,6 @@ export class Authenticator {
     }
 
     async authenticateUrl(url) {
-        console.log("sess " + this.sessionId)
-
         const urlObj = new URL(url);
 
         const tokenP3 = this.#generateTokenP3();

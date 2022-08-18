@@ -54,5 +54,20 @@ export default class GeoUtils {
 	}
 	
 
+	static heading(coords1, coords2) {
+		try {
+			let c1 = new google.maps.LatLng(coords1[0], coords1[1]);
+			let c2 = new google.maps.LatLng(coords2[0], coords2[1]);
+
+			let result = google.maps.geometry.spherical.computeHeading(c1,c2);
+
+			if (result < 0) {
+				result += 360;
+			}
+			return result;
+		} catch (e) {
+			console.log(e);
+		}
+	}
 }
 
