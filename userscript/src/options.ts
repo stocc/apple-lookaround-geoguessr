@@ -5,9 +5,9 @@
 const RESOLUTION_SETTING = 2;
 
 // Constant value added to calculated heading to calibrate the GeoGuessr compass
-const HEADING_CALIBRATION = 40;
+const HEADING_CALIBRATION = 45;
 
-const EXTENSION_FACTOR = 2; // TODO Play around with this value for best results with image stretching
+const EXTENSION_FACTOR = 2.12; // TODO Play around with this value for best results with image stretching
 
 const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
