@@ -10,7 +10,7 @@ const HEADING_CALIBRATION = 45;
 const EXTENSION_FACTOR = 2.12; // TODO Play around with this value for best results with image stretching
 
 const BASE_URL = "https://lookaround.stocc.dev/";
-const CONVERT_LOCALLY = false;
+const CONVERT_LOCALLY = true;
 
 const CORS_PROXY = "https://nameless-bastion-28139.herokuapp.com/"
 
