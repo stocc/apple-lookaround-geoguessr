@@ -215,7 +215,9 @@ async function loadTileForPano(panoFullId, x) {
 		//let endTime2 = Math.floor(Date.now() / 1000);
 		//console.log("Full time: " + (endTime - startTime) + " seconds");
 
-
+		URL.revokeObjectURL(img.src);
+		canvas.remove();
+		img.remove();
 		return result;
 
 	} catch (error) {
