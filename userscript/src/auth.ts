@@ -44,9 +44,9 @@ export class Authenticator {
     async authenticateUrl(url) {
         const urlObj = new URL(url);
         
-        let rm = await this.getResourceManifest();
+        let p2 = await this.getTokenP2();
         const tokenP3 = this.#generateTokenP3();
-        const token = TOKEN_P1 + rm.tokenP2 + tokenP3;
+        const token = TOKEN_P1 + p2 + tokenP3;
         const timestamp = Math.floor(Date.now() / 1000) + 4200;
         const separator = urlObj.search ? "&" : "?";
 
