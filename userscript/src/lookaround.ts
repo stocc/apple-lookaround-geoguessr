@@ -155,16 +155,16 @@ async function loadTileForPano(panoFullId, x) {
 	try {
 
 		var jpegblob;
+		// Step 1: Get the URL of the tile to load
+		// New endpoint /panourl in the python server returns just the Apple URL for the pano
+
+		var appleMapsPanoURL = await getUrlForTile(panoFullId, x, Options.RESOLUTION_SETTING);
+		// Step 2: Load the tile
+
+		//console.log("Requesting tile " + [appleMapsPanoURL])
+		
 		if (Options.CONVERT_LOCALLY) {
-			// Step 1: Get the URL of the tile to load
-			// New endpoint /panourl in the python server returns just the Apple URL for the pano
-
-			var appleMapsPanoURL = await getUrlForTile(panoFullId, x, Options.RESOLUTION_SETTING);
 			appleMapsPanoURL = Options.CORS_PROXY+appleMapsPanoURL;
-			// Step 2: Load the tile
-
-			//console.log("Requesting tile " + [appleMapsPanoURL])
-
 			var blobres = await fetch(appleMapsPanoURL);
 			var blob = await blobres.blob();
 
@@ -174,7 +174,7 @@ async function loadTileForPano(panoFullId, x) {
 			jpegblob = heic2any({"blob": blob, "type": "image/jpeg"});
 		} else {
 
-			jpegblob = await (await fetch(Options.BASE_URL+"pano/" + panoFullId + "/" + Options.RESOLUTION_SETTING + "/" + x + "/")).blob()
+			jpegblob = await (await fetch(Options.BASE_URL+"&url="+encodeURIComponent(appleMapsPanoURL))).blob()
 		}
 		// Step 4: Process image
 		 
