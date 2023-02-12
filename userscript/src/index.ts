@@ -176,7 +176,7 @@ function injectMenu() {
 
 var loadingInProgress = false;
 var currentPano: PanoInfo = new PanoInfo("", "", "",0,0,0);
-var currentlyLoadedPanoTiles: Array<String> = [];
+var currentlyLoadedPanoTiles: Array<string> = [];
 
 var curNeighbors: Array<PanoInfo> = [];
 
@@ -190,34 +190,43 @@ var oldHeading = 0;
 // Google Maps API callbacks
 
 
-// Return a pano image given the panoID.
-const getCustomPanoramaTileUrl = (pano, zoom, tileX, tileY) => {
+class LookaroundPanoramaData implements google.maps.StreetViewPanoramaData {
 
+	location: google.maps.StreetViewLocation;
+	links: Array<google.maps.StreetViewLink> = [];
+	tiles: google.maps.StreetViewTileData;
+	copyright: string = "(C) Apple";
+
+
+	constructor(location: google.maps.StreetViewLocation, tiles: google.maps.StreetViewTileData) {
+		this.location = location;
+		this.tiles = tiles;
+	}
+	
+}
+
+function getTileUrl(pano: string, zoom: number, tileX: number, tileY: number): string {
 	// Currently loading first image in a round, return a blank image
 	//if (pano.startsWith("r")){
-	if (currentlyLoadedPanoTiles.length === 0) {
+		if (currentlyLoadedPanoTiles.length === 0) {
 	
-		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-	}
+			return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+		}
+	
+		return currentlyLoadedPanoTiles[tileX];	
+}
 
-	return currentlyLoadedPanoTiles[tileX];
-
-};
-
-const getPano = (pano) => {
+function getPano(pano: string): LookaroundPanoramaData {
 	let rp = Options.RESOLUTION_PROFILES[Options.RESOLUTION_SETTING];
 	let fullWidth = 2 * rp.big.width + 2 * rp.small.width - 4 * rp.overlap;
-	return {
-		location: {
+	
+	return new LookaroundPanoramaData(
+		{
 			pano: pano,
 			description: "Apple Look Around",
 			latLng: new google.maps.LatLng(currentPano.lat, currentPano.lon),
 		},
-		links: [],
-		// The text for the copyright control.
-		copyright: "(C) Apple",
-		// The definition of the tiles for this panorama.
-		tiles: {
+		{
 			tileSize: new google.maps.Size(Math.round(fullWidth / 4), Math.round(Options.EXTENSION_FACTOR * rp.big.height)),
 			worldSize: new google.maps.Size(fullWidth, Math.round(rp.big.height * Options.EXTENSION_FACTOR)),
 			// The heading in degrees at the origin of the panorama
@@ -232,13 +241,10 @@ const getPano = (pano) => {
 					return newHeading;
 				}
 			}(),
-			getTileUrl: getCustomPanoramaTileUrl,
-		},
-	};
-};
-
-
-
+			getTileUrl: getTileUrl
+		}
+	)
+}
 
 
 
@@ -247,9 +253,8 @@ const getPano = (pano) => {
 
 function initLookAround() {
 	google.maps.StreetViewPanorama = class extends google.maps.StreetViewPanorama {
-		constructor(...args) {
-			super(...args);
-
+		constructor(container: HTMLElement, opts?: google.maps.StreetViewPanoramaOptions) {
+			super(container, opts);
 			let isChecked = localStorage.getItem("applelookaroundchecked");
 			if (isChecked === "true") {
 				this.registerPanoProvider(getPano);
@@ -293,15 +298,15 @@ function initLookAround() {
 
 												//this.getLinks().push(curNeighbors[0])
 						let neighborLinks = curNeighbors.map(neighbor => {return {
-							"descripton": "", 
-							"pano": "r"+neighbor.panoFullId(), 
-							"heading": Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180) % 360,
+							description: "", 
+							pano: "r"+neighbor.panoFullId(), 
+							heading: Math.round(GeoUtils.heading([neighbor.lat, neighbor.lon], [currentPano.lat, currentPano.lon]) + 180) % 360,
 						}});
 						console.log("Pushing Links " + neighborLinks.length);
 
 						for (const neighbor of neighborLinks) {
 							if (neighbor.pano != "") {
-								this.getLinks().push(neighbor);
+								this.getLinks().push(neighbor as google.maps.StreetViewLink);
 							}
 						}
 					}
@@ -315,8 +320,8 @@ function initLookAround() {
 			if (isChecked !== "true") return;
 
 			try {
-				let lat = this.position.lat();
-				let lon = this.position.lng();
+				let lat = this.getPosition().lat();
+				let lon = this.getPosition().lng();
 
 
 				let lookAroundPanoId, regionId;
