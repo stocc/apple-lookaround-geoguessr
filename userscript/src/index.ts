@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         AppleGuessr
-// @namespace    https://greasyfork.org/en/users/946023-mistystar
+// @namespace    https://gist.github.com/stocc/d249c913a47ffde1d01c23d0f415edad
+// @updateURL	 https://gist.github.com/stocc/d249c913a47ffde1d01c23d0f415edad/raw/54143a8190e2667abdf237bc0288d7deaddd89eb/appleguessr.user.js
 // @version      2.1
 // @description  Adds Apple Look Around to GeoGuessr
 // @author       Mistystar (Mistystar#2205, https://github.com/kittenz) & stocc (stocc#2919, https://github.com/stocc)

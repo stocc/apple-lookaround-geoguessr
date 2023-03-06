@@ -12,7 +12,7 @@ const EXTENSION_FACTOR = 2.12; // TODO Play around with this value for best resu
 const BASE_URL = "https://alrgg.stocc.dev/api/proxyConvertedImg?code=EIT_VhF-gEuQ6848xFM3y8S-lflGGD6Q2rIZJ2EIZ9LHAzFuh6mLAQ==";
 const CONVERT_LOCALLY = false;
 
-const CORS_PROXY = "https://nameless-bastion.ac.stocc.dev/"
+const CORS_PROXY = "https://cors-proxy.ac4.stocc.dev/"
 
 const APPLE_MAPS_TILE_ENDPOINT = "https://gspe72-ssl.ls.apple.com/mnn_us/"
 
